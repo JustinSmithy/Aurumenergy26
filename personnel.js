@@ -49,7 +49,7 @@ function renderRoles(){
 function addRole(){
   if(!V('role-name')){toast('⚠️','Enter a role name.','var(--orange)');return;}
   customRoles.push({name:V('role-name'),access:V('role-access')||'employee',desc:V('role-desc'),builtin:false});
-  persist('customRoles');
+  saveCustomRoles(customRoles);
   logRoleEvent('Role Created',V('role-name'),'—',V('role-name'),currentUser?.name||'System');
   document.getElementById('role-name').value='';document.getElementById('role-desc').value='';
   closeModal('addRoleModal');renderRoles();populateRoleSelects();toast('✅','Role created!');
@@ -57,13 +57,13 @@ function addRole(){
 function deleteRole(i){
   const name=customRoles[i]?.name||'—';
   logRoleEvent('Role Deleted',name,name,'—',currentUser?.name||'System');
-  customRoles.splice(i,1);persist('customRoles');renderRoles();populateRoleSelects();toast('🗑','Role deleted.','var(--text-3)');
+  customRoles.splice(i,1);saveCustomRoles(customRoles);renderRoles();populateRoleSelects();toast('🗑','Role deleted.','var(--text-3)');
 }
 
 // ── ROLE CHANGE LOGS ─────────────────────────
 function logRoleEvent(action,subject,fromRole,toRole,actor){
   roleLogs.unshift({date:nowDate(),time:nowTime(),action,subject,fromRole,toRole,actor});
-  persist('roleLogs');
+  saveRoleLogs(roleLogs);
 }
 function renderRoleLogs(){
   var w=document.getElementById('roleLogsWrap');if(!w)return;
@@ -86,7 +86,7 @@ function renderRoleLogs(){
   });
   w.innerHTML='<table><thead><tr><th>Date</th><th>Time</th><th>Action</th><th>Subject</th><th>From</th><th>To</th><th>Performed By</th></tr></thead><tbody>'+rows+'</tbody></table>';
 }
-function clearRoleLogs(){roleLogs.length=0;persist('roleLogs');renderRoleLogs();toast('🗑','Role logs cleared.','var(--text-3)');}
+function clearRoleLogs(){roleLogs.length=0;saveRoleLogs(roleLogs);renderRoleLogs();toast('🗑','Role logs cleared.','var(--text-3)');}
 
 // ── ADMIN: ACCOUNTS ───────────────────────────
 function renderAccounts(){
@@ -124,9 +124,9 @@ function renderAccounts(){
   w.innerHTML=resetsHtml+'<table><thead><tr><th>Name</th><th>Username</th><th>Badge</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+rows+'</tbody></table>';
   updateChips();
 }
-function verifyAcc(i){accounts[i].status='verified';persist('accounts');logRoleEvent('Account Verified',accounts[i].name,'—','Verified',currentUser?.name||'System');renderAccounts();toast('✅',accounts[i].name+' verified!');updateChips();}
-function rejectAcc(i){accounts[i].status='rejected';persist('accounts');logRoleEvent('Account Rejected',accounts[i].name,'—','Rejected',currentUser?.name||'System');renderAccounts();toast('✕','Account rejected.','var(--red)');updateChips();}
-function removeAcc(i){const n=accounts[i].name;logRoleEvent('Account Removed',n,accounts[i].role,'—',currentUser?.name||'System');accounts.splice(i,1);persist('accounts');renderAccounts();toast('🗑','Account removed.','var(--text-3)');}
+function verifyAcc(i){accounts[i].status='verified';savePersonnel(accounts);logRoleEvent('Account Verified',accounts[i].name,'—','Verified',currentUser?.name||'System');renderAccounts();toast('✅',accounts[i].name+' verified!');updateChips();}
+function rejectAcc(i){accounts[i].status='rejected';savePersonnel(accounts);logRoleEvent('Account Rejected',accounts[i].name,'—','Rejected',currentUser?.name||'System');renderAccounts();toast('✕','Account rejected.','var(--red)');updateChips();}
+function removeAcc(i){const n=accounts[i].name;logRoleEvent('Account Removed',n,accounts[i].role,'—',currentUser?.name||'System');accounts.splice(i,1);savePersonnel(accounts);renderAccounts();toast('🗑','Account removed.','var(--text-3)');}
 function openChangeBadge(i){
   const a=accounts[i];
   document.getElementById('cbIdx').value=i;
@@ -141,7 +141,7 @@ function confirmChangeBadge(){
   if(!nb){toast('⚠️','Enter a badge number.','var(--orange)');return;}
   const old=accounts[i].badge;
   accounts[i].badge=nb;
-  persist('accounts');
+  savePersonnel(accounts);
   logRoleEvent('Badge Changed',accounts[i].name,old,nb,currentUser?.name||'System');
   closeModal('changeBadgeModal');
   renderAccounts();
@@ -162,7 +162,7 @@ function confirmChangeName(){
   const old=accounts[i].name;
   accounts[i].name=nn;
   accounts[i].initials=nn.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-  persist('accounts');
+  savePersonnel(accounts);
   logRoleEvent('Name Changed',nn,old,nn,currentUser?.name||'System');
   if(currentUser&&currentUser.username===accounts[i].username){
     currentUser.name=nn;currentUser.initials=accounts[i].initials;
@@ -208,7 +208,7 @@ function confirmChangeRole(){
   const isAdmin=adminLevels.includes(newRole);
   const action=isAdmin&&!wasAdmin?'Promoted':!isAdmin&&wasAdmin?'Demoted':'Role Changed';
   logRoleEvent(action,a.name,prev,newRole,currentUser?.name||'System');
-  persist('accounts');
+  savePersonnel(accounts);
   closeModal('changeRoleModal');
   renderAccounts();
   populateRoleSelects();
@@ -225,10 +225,10 @@ function doResetPw(){
   const i=parseInt(V('rpIdx'));const pw=V('rpNew');
   if(!pw){toast('⚠️','Enter a new password.','var(--orange)');return;}
   accounts[i].password=pw;
-  persist('accounts');
+  savePersonnel(accounts);
   const user=accounts[i].username;
   const ri=pendingResets.findIndex(r=>r.username===user);if(ri>=0)pendingResets.splice(ri,1);
-  persist('pendingResets');
+  savePendingResets(pendingResets);
   closeModal('resetPwModal');document.getElementById('rpNew').value='';
   renderAccounts();toast('🔑','Password reset successfully!','var(--green)');
 }
@@ -286,7 +286,7 @@ function submitApplication(){
   const bgCheck=division==='corp'?V('apBgCheck'):'n/a';
   const nda=division==='corp'?V('apNda'):'n/a';
   applications.push({name,phone,age,nationality:nat,role,division:division==='corp'?'Aurum Corporation':'Aurum Energy — Operations',experience:exp,reason:why,notes,bgCheck,nda,routing:V('apRouting'),submittedAt:nowDate(),status:'pending'});
-  persist('applications');
+  saveApplications(applications);
   err.style.display='none';ok.style.display='block';
   ['apName','apPhone','apAge','apNat','apExp','apWhy','apNotes'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('apRole').selectedIndex=0;
@@ -359,7 +359,7 @@ function acceptApplication(i){
   const pw='aurum'+Math.floor(1000+Math.random()*9000);
   const initials=(a.name.split(' ').map(w=>w[0]).join('')).toUpperCase().slice(0,2);
   accounts.push({username:uname,password:pw,name:a.name,badge:'NEW',role:a.role,status:'pending',initials:(a.name.split(' ').map(w=>w[0]||'').join('')).toUpperCase().slice(0,2),phone:a.phone||'',routing:a.routing||''});
-  persist('accounts');persist('applications');
+  savePersonnel(accounts);saveApplications(applications);
   renderApplications();updateChips();
   document.getElementById('credName').textContent=a.name;
   document.getElementById('credUser').textContent=uname;
@@ -367,10 +367,10 @@ function acceptApplication(i){
   document.getElementById('credRole').textContent=a.role;
   openModal('credentialsModal');
 }
-function rejectApplication(i){applications[i].status='rejected';persist('applications');renderApplications();updateChips();toast('✕','Application rejected.','var(--red)');}
+function rejectApplication(i){applications[i].status='rejected';saveApplications(applications);renderApplications();updateChips();toast('✕','Application rejected.','var(--red)');}
 function moveToInterview(i){
   if(!isAdmin()){toast('🚫','Supervisors and Managers only.','var(--red)');return;}
-  applications[i].status='interview';persist('applications');renderApplications();updateChips();
+  applications[i].status='interview';saveApplications(applications);renderApplications();updateChips();
   toast('📅',applications[i].name+' moved to Interview stage.','var(--blue)');
 }
 
@@ -388,7 +388,7 @@ function assignShift(){
   selected.forEach(empName=>{
     assignedShifts.unshift({employeeName:empName,date:V('as-date'),startTime:V('as-start'),endTime:V('as-end'),vehicle:Array.from(document.getElementById('as-vehicle').selectedOptions).map(o=>o.value).filter(Boolean).join(', ')||'',orderTitle:V('as-order'),notes:V('as-notes'),assignedBy:currentUser?.name||'Admin',status:'assigned'});
   });
-  persist('assignedShifts');
+  saveAssignedShifts(assignedShifts);
   document.getElementById('as-notes').value='';
   ['as-order'].forEach(id=>document.getElementById(id).selectedIndex=0);
   const asVeh=document.getElementById('as-vehicle');if(asVeh)Array.from(asVeh.options).forEach(o=>o.selected=false);
@@ -418,7 +418,7 @@ function renderAssignedShifts(){
   });
   w.innerHTML='<table><thead><tr><th>Employee</th><th>Date</th><th>Start</th><th>End</th><th>Vehicle</th><th>Task</th><th>By</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+rows+'</tbody></table>';
 }
-function removeShift(i){assignedShifts.splice(i,1);persist('assignedShifts');renderAssignedShifts();toast('🗑','Shift removed.','var(--text-3)');}
+function removeShift(i){assignedShifts.splice(i,1);saveAssignedShifts(assignedShifts);renderAssignedShifts();toast('🗑','Shift removed.','var(--text-3)');}
 
 // ── SHIFT (employee) ──────────────────────────
 setInterval(()=>{
@@ -510,7 +510,7 @@ function endShift(){
   const entry={name:activeShift.name,badge:activeShift.badge,role:activeShift.role,vehicle:activeShift.vehicle||'—',date:nowDate(),startTime:document.getElementById('shActStart').textContent,endTime:nowTime(),durationMs:dur,duration:fmtDur(dur),durationShort:fmtShort(dur),deliveries:activeShift.deliveries,fieldReports:activeShift.fieldReports,breakMs:totalBreakMs,breakShort:fmtShort(totalBreakMs),status:'Completed'};
   shiftHistory.unshift(entry);
   if(activeShift.assignedShift)activeShift.assignedShift.status='completed';
-  persist('shiftHistory');persist('assignedShifts');
+  saveShiftHistory(shiftHistory);saveAssignedShifts(assignedShifts);
   activeShift=null;totalBreakMs=0;
   document.getElementById('shActive').style.display='none';
   document.getElementById('shInactive').style.display='block';
@@ -553,12 +553,12 @@ function viewShift(i){
 // ── MY SHIFTS ─────────────────────────────────
 function acceptShift(i){
   const s=assignedShifts[i];if(!s)return;
-  s.status='accepted';persist('assignedShifts');updateChips();renderMyShifts();
+  s.status='accepted';saveAssignedShifts(assignedShifts);updateChips();renderMyShifts();
   toast('✅','Shift accepted! You will be reminded when it is time.','var(--green)');
 }
 function declineShift(i){
   const s=assignedShifts[i];if(!s)return;
-  s.status='declined';persist('assignedShifts');updateChips();renderMyShifts();
+  s.status='declined';saveAssignedShifts(assignedShifts);updateChips();renderMyShifts();
   toast('✕','Shift declined.','var(--red)');
 }
 function renderMyShifts(){
@@ -701,7 +701,7 @@ document.addEventListener('click',function(e){
 });
 
 // ── IC EMAIL PORTAL ───────────────────────────
-const icMessages=lsLoad(LS_KEYS.icMessages,[]);
+// icMessages array is declared and seeded in app.js via fetchIcMessages()
 let icCurrentApplicant=null;
 let icSelectedMsgId=null;
 let icCurrentFolder='inbox';
@@ -709,7 +709,7 @@ let icHrViewApplicantPhone=null;
 
 function icpEnter(appl,fromRestore){
   icCurrentApplicant=appl;
-  if(!fromRestore)lsSave(LS_KEYS.icSession,appl.phone);
+  if(!fromRestore)saveIcSession(appl.phone);
   document.getElementById('authWrap').style.display='none';
   document.getElementById('app').classList.remove('on');
   document.getElementById('icPortal').classList.add('on');
@@ -723,7 +723,7 @@ function icpEnter(appl,fromRestore){
       subject:'Welcome to the Aurum Energy Interview Process',
       body:'Dear '+appl.name+',\n\nThank you for your application to join Aurum Energy.\n\nWe are pleased to inform you that your application for the position of '+appl.role+' has progressed to the interview stage.\n\nThis inbox is your official communication channel with the Aurum Energy HR team during this process. Please check here regularly for updates, scheduling information, and any questions we may have for you.\n\nIf you have any questions in the meantime, please use the Compose button to reach us directly.\n\nWe look forward to speaking with you soon.\n\nKind regards,\nHR Department\nAurum Energy',
       date:nowDate(),time:nowTime(),read:false});
-    persist('icMessages');
+    saveIcMessages(icMessages);
   }
   icpRenderFolder();
 }
@@ -779,7 +779,7 @@ function icpRenderFolder(){
 function icpOpenMsg(id){
   icSelectedMsgId=id;
   const msg=icMessages.find(m=>m.id===id);if(!msg)return;
-  if(!msg.read){msg.read=true;persist('icMessages');}
+  if(!msg.read){msg.read=true;saveIcMessages(icMessages);}
   icpRenderFolder();
   document.getElementById('icpViewerEmpty').style.display='none';
   document.getElementById('icpStatusView').style.display='none';
@@ -799,7 +799,7 @@ function icpSendReply(){
   const origMsg=icMessages.find(m=>m.id===icSelectedMsgId);
   icMessages.unshift({id:'msg_'+Date.now(),applicantPhone:icCurrentApplicant.phone,from:'applicant',
     subject:'Re: '+(origMsg?.subject||''),body:text,date:nowDate(),time:nowTime(),read:true});
-  persist('icMessages');
+  saveIcMessages(icMessages);
   document.getElementById('icpReplyText').value='';
   toast('📤','Reply sent to HR.','var(--green)');icpRenderFolder();
 }
@@ -815,7 +815,7 @@ function icpSendCompose(){
   if(!subj||!body){toast('⚠️','Please fill in subject and message.','var(--orange)');return;}
   icMessages.unshift({id:'msg_'+Date.now(),applicantPhone:icCurrentApplicant.phone,from:'applicant',
     subject:subj,body:body,date:nowDate(),time:nowTime(),read:true});
-  persist('icMessages');icpCloseCompose();
+  saveIcMessages(icMessages);icpCloseCompose();
   toast('📤','Message sent to HR.','var(--green)');icpSwitchFolder('sent');
 }
 document.getElementById('icpComposeOverlay')?.addEventListener('click',function(e){if(e.target===this)icpCloseCompose();});
@@ -845,7 +845,7 @@ function hrSendMessage(){
   if(!text||!icHrViewApplicantPhone){toast('⚠️','Type a message first.','var(--orange)');return;}
   icMessages.unshift({id:'msg_'+Date.now(),applicantPhone:icHrViewApplicantPhone,from:'hr',
     subject:'Message from HR — Aurum Energy',body:text,date:nowDate(),time:nowTime(),read:false});
-  persist('icMessages');
+  saveIcMessages(icMessages);
   document.getElementById('hrMsgInput').value='';hrRenderThread();
   toast('📤','Message sent to applicant.','var(--green)');
 }
@@ -883,7 +883,7 @@ function submitReimbursement(){
   if(!badge||!name||!type||!amount||!date||!desc){toast('⚠️','Fill in all required fields.','var(--orange)');return;}
   const finalType=type==='Other — Please Specify'?(typeOther||type):type;
   reimbursementRequests.unshift({date:nowDate(),time:nowTime(),badge,name,rank,type:finalType,amount,expenseDate:date,receipt:V('rr-receipt'),orderRef:V('rr-order-ref'),status:V('rr-status')||'Pending',desc,notes:V('rr-notes')});
-  lsSave('ae_reimbursements',reimbursementRequests);
+  saveReimbursements(reimbursementRequests);
   ['rr-amount','rr-date','rr-receipt','rr-desc','rr-notes'].forEach(id=>document.getElementById(id).value='');
   ['rr-type','rr-status'].forEach(id=>{const el=document.getElementById(id);if(el)el.selectedIndex=0;});
   updateRRStats();renderRR();toast('✅','Reimbursement request submitted!','var(--green)');showPage('reimbursement');
@@ -894,12 +894,12 @@ function viewRR(i){
   document.getElementById('prevBody').innerHTML=`<div style="padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid var(--border)"><div style="font-family:Space Grotesk,sans-serif;font-size:16px;font-weight:600">${r.name}</div><div class="mono" style="font-size:11px;color:var(--text-3)">Badge #${r.badge} · ${r.rank} · ${r.date}</div></div>${pGrid(pRow('EXPENSE TYPE',r.type),pRow('AMOUNT','$'+r.amount),pRow('EXPENSE DATE',r.expenseDate||'—'),pRow('RECEIPT #',r.receipt||'—'),pRow('ORDER REF',r.orderRef||'—'),pRow('STATUS',r.status))}${pRow('DESCRIPTION',r.desc)}${r.notes?'<div style="margin-top:8px">'+pRow('MANAGEMENT NOTES',r.notes)+'</div>':''}`;
   openModal('prevModal');
 }
-function approveRR(i){if(!isAdmin())return;reimbursementRequests[i].status='Approved';lsSave('ae_reimbursements',reimbursementRequests);renderRR();updateRRStats();toast('✅','Request approved.','var(--green)');}
-function rejectRR(i){if(!isAdmin())return;reimbursementRequests[i].status='Rejected';lsSave('ae_reimbursements',reimbursementRequests);renderRR();updateRRStats();toast('✕','Request rejected.','var(--red)');}
+function approveRR(i){if(!isAdmin())return;reimbursementRequests[i].status='Approved';saveReimbursements(reimbursementRequests);renderRR();updateRRStats();toast('✅','Request approved.','var(--green)');}
+function rejectRR(i){if(!isAdmin())return;reimbursementRequests[i].status='Rejected';saveReimbursements(reimbursementRequests);renderRR();updateRRStats();toast('✕','Request rejected.','var(--red)');}
 
 // ── IC SESSION RESTORE ────────────────────────
 (function restoreIcSession(){
-  const phone=lsLoad(LS_KEYS.icSession,null);
+  const phone=loadIcSession();
   if(!phone)return;
   const appl=applications.find(a=>a.phone===phone&&a.status==='interview');
   if(appl)icpEnter(appl,true);
