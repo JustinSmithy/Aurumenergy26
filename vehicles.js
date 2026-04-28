@@ -31,7 +31,7 @@ function checkInsuranceExpiry(){
       if(s&&s.days<=0){f.insured='No';f.insuredOn='';f.insDays='';f.insExpiry='';changed=true;}
     }
   });
-  if(changed){persist('fleet');updateFleetStats();}
+  if(changed){saveFleet(fleet);updateFleetStats();}
 }
 
 // ── FLEET ─────────────────────────────────────
@@ -147,7 +147,7 @@ function applyBatchEdit(){
     if(maint)fleet[fi].maint=maint;
     if(fuel)fleet[fi].fuel=fuel;
   });
-  persist('fleet');closeModal('batchFleetModal');
+  saveFleet(fleet);closeModal('batchFleetModal');
   const n=fleetSelection.size;clearFleetSelection();
   updateFleetStats();renderFleet(fleet);toast('✅','Updated '+n+' vehicle'+(n>1?'s':'')+'!');
 }
@@ -157,7 +157,7 @@ function batchDelete(){
   if(!confirm('Delete '+fleetSelection.size+' selected vehicle'+(fleetSelection.size>1?'s':'')+' ?'))return;
   const indices=[...fleetSelection].sort((a,b)=>b-a);
   indices.forEach(i=>fleet.splice(i,1));
-  persist('fleet');const n=indices.length;clearFleetSelection();
+  saveFleet(fleet);const n=indices.length;clearFleetSelection();
   updateFleetStats();populateVehicleSelect();populateShiftVehicle();
   toast('🗑','Deleted '+n+' vehicle'+(n>1?'s':'.')+'.','var(--text-3)');
 }
@@ -173,10 +173,10 @@ function updateFleetStats(){
   if(expEl)expEl.textContent=fleet.filter(f=>{if(f.insured!=='Yes')return false;const s=f.insuredOn?insExpiryStatus(f):f.insExpiry?insExpiryStatus(f.insExpiry):null;return s&&s.days>=0&&s.days<=30;}).length;
 }
 function toggleCustomType(selId,inputId){const sel=document.getElementById(selId);const inp=document.getElementById(inputId);if(!sel||!inp)return;inp.style.display=sel.value==='__custom__'?'block':'none';if(sel.value!=='__custom__')inp.value='';}
-function addVehicle(){if(!isAdmin()){toast('🚫','Supervisors and Managers only.','var(--red)');return;}const rawType=V('fl-type');const customType=document.getElementById('fl-type-custom').value.trim();const finalType=rawType==='__custom__'?customType:rawType;if(!V('fl-plate')||!finalType||!V('fl-status')||!V('fl-condition')||!V('fl-maint')||!V('fl-fuel')||!V('fl-category')){toast('⚠️','Fill in all fields.','var(--orange)');return;}const flIns=V('fl-insured');const flDays=document.getElementById('fl-ins-days').value.trim();fleet.unshift({plate:V('fl-plate').toUpperCase(),category:V('fl-category'),type:finalType,status:V('fl-status'),condition:V('fl-condition'),maint:V('fl-maint'),fuel:V('fl-fuel'),insured:flIns,insuredOn:flIns==='Yes'&&flDays?new Date().toISOString().slice(0,10):'',insDays:flIns==='Yes'&&flDays?flDays:''});persist('fleet');document.getElementById('fl-plate').value='';document.getElementById('fl-ins-days').value='';document.getElementById('fl-type-custom').value='';document.getElementById('fl-type-custom').style.display='none';['fl-category','fl-type','fl-status','fl-condition','fl-maint','fl-fuel','fl-insured'].forEach(id=>document.getElementById(id).selectedIndex=0);document.getElementById('fl-ins-expiry-wrap').style.display='none';closeModal('fleetModal');updateFleetStats();renderFleet(fleet);populateVehicleSelect();populateShiftVehicle();toast('✅','Vehicle added!');}
+function addVehicle(){if(!isAdmin()){toast('🚫','Supervisors and Managers only.','var(--red)');return;}const rawType=V('fl-type');const customType=document.getElementById('fl-type-custom').value.trim();const finalType=rawType==='__custom__'?customType:rawType;if(!V('fl-plate')||!finalType||!V('fl-status')||!V('fl-condition')||!V('fl-maint')||!V('fl-fuel')||!V('fl-category')){toast('⚠️','Fill in all fields.','var(--orange)');return;}const flIns=V('fl-insured');const flDays=document.getElementById('fl-ins-days').value.trim();fleet.unshift({plate:V('fl-plate').toUpperCase(),category:V('fl-category'),type:finalType,status:V('fl-status'),condition:V('fl-condition'),maint:V('fl-maint'),fuel:V('fl-fuel'),insured:flIns,insuredOn:flIns==='Yes'&&flDays?new Date().toISOString().slice(0,10):'',insDays:flIns==='Yes'&&flDays?flDays:''});saveFleet(fleet);document.getElementById('fl-plate').value='';document.getElementById('fl-ins-days').value='';document.getElementById('fl-type-custom').value='';document.getElementById('fl-type-custom').style.display='none';['fl-category','fl-type','fl-status','fl-condition','fl-maint','fl-fuel','fl-insured'].forEach(id=>document.getElementById(id).selectedIndex=0);document.getElementById('fl-ins-expiry-wrap').style.display='none';closeModal('fleetModal');updateFleetStats();renderFleet(fleet);populateVehicleSelect();populateShiftVehicle();toast('✅','Vehicle added!');}
 function editVehicle(i){const f=fleet[i];document.getElementById('efl-idx').value=i;document.getElementById('efl-plate').value=f.plate;document.getElementById('efl-category').value=f.category||'Trucking';const knownTypes=['Semi Truck','Box Truck','Flatbed','Van','Pickup','Helicopter','Plane'];const typeEl=document.getElementById('efl-type');const typeCustomEl=document.getElementById('efl-type-custom');if(knownTypes.includes(f.type)){typeEl.value=f.type;typeCustomEl.style.display='none';typeCustomEl.value='';}else{typeEl.value='__custom__';typeCustomEl.style.display='block';typeCustomEl.value=f.type||'';}document.getElementById('efl-status').value=f.status||'Operational';document.getElementById('efl-condition').value=f.condition||'Good';document.getElementById('efl-maint').value=f.maint||'Green — No Issues';document.getElementById('efl-fuel').value=f.fuel||'>75% — Full';const eInsEl=document.getElementById('efl-insured');const eInsDays=document.getElementById('efl-ins-days');const eInsWrap=document.getElementById('efl-ins-expiry-wrap');const eInsRem=document.getElementById('efl-ins-remaining');if(eInsEl)eInsEl.value=f.insured||'';if(eInsWrap)eInsWrap.style.display=f.insured==='Yes'?'block':'none';if(eInsDays)eInsDays.value=f.insDays||'';if(eInsRem){const s=f.insuredOn?insExpiryStatus(f):null;eInsRem.textContent=s&&s.days>0?s.days+'d remaining — enter new days to restart the clock':'Enter days to set new insurance period';}openModal('editFleetModal');}
-function saveVehicle(){if(!isAdmin()){toast('🚫','Supervisors and Managers only.','var(--red)');return;}const i=parseInt(V('efl-idx'));const rawType=V('efl-type');const customType=document.getElementById('efl-type-custom').value.trim();const finalType=rawType==='__custom__'?customType:rawType;if(!finalType){toast('⚠️','Please specify the vehicle type.','var(--orange)');return;}const eIns=V('efl-insured');const eDays=document.getElementById('efl-ins-days').value.trim();const prev=fleet[i];fleet[i]={plate:V('efl-plate').toUpperCase(),category:V('efl-category'),type:finalType,status:V('efl-status'),condition:V('efl-condition'),maint:V('efl-maint'),fuel:V('efl-fuel'),insured:eIns,insuredOn:eIns==='Yes'&&eDays?new Date().toISOString().slice(0,10):(eIns==='Yes'?prev.insuredOn||'':''),insDays:eIns==='Yes'&&eDays?eDays:(eIns==='Yes'?prev.insDays||'':'')};persist('fleet');closeModal('editFleetModal');updateFleetStats();renderFleet(fleet);populateVehicleSelect();populateShiftVehicle();toast('✅','Vehicle updated!');}
-function delVehicle(i){if(!isAdmin()){toast('🚫','Supervisors and Managers only.','var(--red)');return;}fleet.splice(i,1);persist('fleet');updateFleetStats();renderFleet(fleet);populateVehicleSelect();populateShiftVehicle();toast('🗑','Vehicle removed.','var(--text-3)');}
+function saveVehicle(){if(!isAdmin()){toast('🚫','Supervisors and Managers only.','var(--red)');return;}const i=parseInt(V('efl-idx'));const rawType=V('efl-type');const customType=document.getElementById('efl-type-custom').value.trim();const finalType=rawType==='__custom__'?customType:rawType;if(!finalType){toast('⚠️','Please specify the vehicle type.','var(--orange)');return;}const eIns=V('efl-insured');const eDays=document.getElementById('efl-ins-days').value.trim();const prev=fleet[i];fleet[i]={plate:V('efl-plate').toUpperCase(),category:V('efl-category'),type:finalType,status:V('efl-status'),condition:V('efl-condition'),maint:V('efl-maint'),fuel:V('efl-fuel'),insured:eIns,insuredOn:eIns==='Yes'&&eDays?new Date().toISOString().slice(0,10):(eIns==='Yes'?prev.insuredOn||'':''),insDays:eIns==='Yes'&&eDays?eDays:(eIns==='Yes'?prev.insDays||'':'')};saveFleet(fleet);closeModal('editFleetModal');updateFleetStats();renderFleet(fleet);populateVehicleSelect();populateShiftVehicle();toast('✅','Vehicle updated!');}
+function delVehicle(i){if(!isAdmin()){toast('🚫','Supervisors and Managers only.','var(--red)');return;}fleet.splice(i,1);saveFleet(fleet);updateFleetStats();renderFleet(fleet);populateVehicleSelect();populateShiftVehicle();toast('🗑','Vehicle removed.','var(--text-3)');}
 function viewVehicle(i){
   const f=fleet[i];if(!f)return;
   document.getElementById('prevTitle').textContent='Vehicle — '+f.plate;
@@ -284,7 +284,7 @@ function submitMaintService(){
     fuel:V('ms-fuel'),mileage:V('ms-mileage'),
     statusAfter:V('ms-status'),desc:V('ms-desc'),notes:V('ms-notes')
   });
-  persist('maintenanceServiceLogs');
+  saveMaintenanceLogs(maintenanceServiceLogs);
   ['ms-cost','ms-parts','ms-desc','ms-notes','ms-mileage'].forEach(id=>document.getElementById(id).value='');
   const techEl=document.getElementById('ms-tech');if(techEl)techEl.value='';
   ['ms-plate','ms-type','ms-status','ms-fuel'].forEach(id=>document.getElementById(id).selectedIndex=0);
