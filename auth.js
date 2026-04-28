@@ -143,7 +143,7 @@ function updateChips(){
 (function bootApp(){
   const _bm=document.querySelector('.main');
   if(_bm){_bm.style.backgroundImage='url('+_BG_DL+')';_bm.style.backgroundSize='cover';_bm.style.backgroundPosition='center';}
-  const savedIcPhone=loadIcSession();
+  const savedIcPhone = null;
   if(savedIcPhone){
     const appl=applications.find(a=>a.status==='interview'&&a.phone===savedIcPhone);
     if(appl){icpEnter(appl,true);return;}
