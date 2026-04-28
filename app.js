@@ -47,7 +47,7 @@ const DEFAULT_FLEET=[
   {plate:'AURUM3',category:'Utility',type:'Seaclamo',status:'Operational',condition:'Good',maint:'Green — No Issues',fuel:'>75% — Full'},
   {plate:'N108BA',category:'Air',type:'Cargobob',status:'Operational',condition:'Good',maint:'Green — No Issues',fuel:'>75% — Full'},
 ];
-const accounts             = fetchPersonnel();
+const accounts             = // fetchPersonnel();
 const pendingResets        = fetchPendingResets();
 const applications         = fetchApplications();
 const deliveryLogs         = fetchDeliveryLogs();
