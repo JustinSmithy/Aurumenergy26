@@ -48,21 +48,21 @@ const DEFAULT_FLEET=[
   {plate:'N108BA',category:'Air',type:'Cargobob',status:'Operational',condition:'Good',maint:'Green — No Issues',fuel:'>75% — Full'},
 ];
 const accounts             = [];
-const pendingResets        = fetchPendingResets();
-const applications         = fetchApplications();
-const deliveryLogs         = fetchDeliveryLogs();
-const fieldReports         = fetchFieldReports();
-const incidentReports      = fetchIncidentReports();
-const clients              = fetchClients();
-const fleet                = fetchFleet();
-const orders               = fetchOrders();
-const shiftHistory         = fetchShiftHistory();
-const assignedShifts       = fetchAssignedShifts();
-const customRoles          = fetchCustomRoles();
-const maintenanceServiceLogs = fetchMaintenanceLogs();
-const roleLogs             = fetchRoleLogs();
-const reimbursementRequests = fetchReimbursements();
-const icMessages           = fetchIcMessages();
+const pendingResets        = [];
+const applications         = [];
+const deliveryLogs         = [];
+const fieldReports         = [];
+const incidentReports      = [];
+const clients              = [];
+const fleet                = [];
+const orders               = [];
+const shiftHistory         = [];
+const assignedShifts       = [];
+const customRoles          = [];
+const maintenanceServiceLogs = [];
+const roleLogs             = [];
+const reimbursementRequests = [];
+const icMessages           = [];
 
 const BUILTIN_ROLES=[
   {name:'Manager',code:'',access:'manager',desc:'Full portal access. Approves hires, sets policy, and oversees all departments.',builtin:true},
