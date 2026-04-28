@@ -1,3 +1,4 @@
+function loadSession() { return null; }
 // ════════════════════════════════════════════
 // AUTH — login, register, recover, logout, session, info panels
 // ════════════════════════════════════════════
