@@ -1,5 +1,3 @@
-let _BG_DL = "https://i.postimg.cc/YqLfMBCd/login-background.jpg";
-
 // ════════════════════════════════════════════
 // AUTH — login, register, recover, logout, session, info panels
 // ════════════════════════════════════════════
