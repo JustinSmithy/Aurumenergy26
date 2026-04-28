@@ -1,30 +1,7 @@
 // ════════════════════════════════════════════
-// LOCALSTORAGE PERSISTENCE
-// ════════════════════════════════════════════
-const LS_KEYS={
-  accounts:'ae_accounts',pendingResets:'ae_pendingResets',applications:'ae_applications',
-  deliveryLogs:'ae_deliveryLogs',fieldReports:'ae_fieldReports',incidentReports:'ae_incidentReports',
-  clients:'ae_clients',fleet:'ae_fleet',orders:'ae_orders',shiftHistory:'ae_shiftHistory',
-  assignedShifts:'ae_assignedShifts',customRoles:'ae_customRoles',
-  maintenanceServiceLogs:'ae_maintenanceLogs',roleLogs:'ae_roleLogs',session:'ae_session',
-  icMessages:'ae_icMessages',icSession:'ae_icSession',reimbursementRequests:'ae_reimbursements'
-};
-function lsLoad(key,fallback){try{const v=localStorage.getItem(key);return v?JSON.parse(v):fallback;}catch(e){return fallback;}}
-function lsSave(key,val){try{localStorage.setItem(key,JSON.stringify(val));}catch(e){}}
-function persist(key){
-  const _dataMap={
-    accounts:()=>accounts,pendingResets:()=>pendingResets,applications:()=>applications,
-    deliveryLogs:()=>deliveryLogs,fieldReports:()=>fieldReports,incidentReports:()=>incidentReports,
-    clients:()=>clients,fleet:()=>fleet,orders:()=>orders,shiftHistory:()=>shiftHistory,
-    assignedShifts:()=>assignedShifts,customRoles:()=>customRoles,
-    maintenanceServiceLogs:()=>maintenanceServiceLogs,icMessages:()=>icMessages,roleLogs:()=>roleLogs,
-    reimbursementRequests:()=>reimbursementRequests
-  };
-  if(_dataMap[key])lsSave(LS_KEYS[key],_dataMap[key]());
-}
-
-// ════════════════════════════════════════════
-// DATA — default seed + localStorage hydration
+// DATA — runtime arrays, seeded via api.js
+// All persistence is handled exclusively in api.js.
+// Nothing here calls localStorage directly.
 // ════════════════════════════════════════════
 const DEFAULT_ACCOUNTS=[{username:'justin',password:'logistics',name:'Justin Driver',badge:'4721',role:'Manager',status:'verified',initials:'JD'}];
 const DEFAULT_FLEET=[
@@ -70,32 +47,22 @@ const DEFAULT_FLEET=[
   {plate:'AURUM3',category:'Utility',type:'Seaclamo',status:'Operational',condition:'Good',maint:'Green — No Issues',fuel:'>75% — Full'},
   {plate:'N108BA',category:'Air',type:'Cargobob',status:'Operational',condition:'Good',maint:'Green — No Issues',fuel:'>75% — Full'},
 ];
-const accounts=lsLoad(LS_KEYS.accounts,DEFAULT_ACCOUNTS);
-const pendingResets=lsLoad(LS_KEYS.pendingResets,[]);
-const applications=lsLoad(LS_KEYS.applications,[]);
-const deliveryLogs=lsLoad(LS_KEYS.deliveryLogs,[]);
-const fieldReports=lsLoad(LS_KEYS.fieldReports,[]);
-const incidentReports=lsLoad(LS_KEYS.incidentReports,[]);
-const clients=lsLoad(LS_KEYS.clients,[]);
-const FLEET_VERSION='v3';
-const fleet=(()=>{
-  const storedVer=localStorage.getItem('ae_fleet_version');
-  if(storedVer!==FLEET_VERSION){localStorage.removeItem('ae_fleet');localStorage.setItem('ae_fleet_version',FLEET_VERSION);}
-  const raw=localStorage.getItem('ae_fleet');
-  let _f=null;try{_f=raw?JSON.parse(raw):null;}catch(e){_f=null;}
-  if(!Array.isArray(_f)||!_f.length){lsSave(LS_KEYS.fleet,DEFAULT_FLEET);return DEFAULT_FLEET.slice();}
-  const _merged=[..._f];
-  DEFAULT_FLEET.forEach(def=>{if(!_merged.find(v=>v.plate===def.plate&&v.type===def.type))_merged.push(def);});
-  if(_merged.length!==_f.length)lsSave(LS_KEYS.fleet,_merged);
-  return _merged;
-})();
-const orders=lsLoad(LS_KEYS.orders,[]);
-const shiftHistory=lsLoad(LS_KEYS.shiftHistory,[]);
-const assignedShifts=lsLoad(LS_KEYS.assignedShifts,[]);
-const customRoles=lsLoad(LS_KEYS.customRoles,[]);
-const maintenanceServiceLogs=lsLoad(LS_KEYS.maintenanceServiceLogs,[]);
-const roleLogs=lsLoad(LS_KEYS.roleLogs,[]);
-const reimbursementRequests=lsLoad(LS_KEYS.reimbursementRequests,[]);
+const accounts             = fetchPersonnel();
+const pendingResets        = fetchPendingResets();
+const applications         = fetchApplications();
+const deliveryLogs         = fetchDeliveryLogs();
+const fieldReports         = fetchFieldReports();
+const incidentReports      = fetchIncidentReports();
+const clients              = fetchClients();
+const fleet                = fetchFleet();
+const orders               = fetchOrders();
+const shiftHistory         = fetchShiftHistory();
+const assignedShifts       = fetchAssignedShifts();
+const customRoles          = fetchCustomRoles();
+const maintenanceServiceLogs = fetchMaintenanceLogs();
+const roleLogs             = fetchRoleLogs();
+const reimbursementRequests = fetchReimbursements();
+const icMessages           = fetchIcMessages();
 
 const BUILTIN_ROLES=[
   {name:'Manager',code:'',access:'manager',desc:'Full portal access. Approves hires, sets policy, and oversees all departments.',builtin:true},
@@ -174,7 +141,7 @@ function toast(ico,msg,color='var(--green)'){
 // PAGE ROUTER
 // ════════════════════════════════════════════
 function showPage(id){
-  if(currentUser)try{localStorage.setItem('ae_last_page',id);}catch(e){}
+  if(currentUser) saveLastPage(id);
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   const pg=document.getElementById('page-'+id);if(pg)pg.classList.add('on');
   const _m=document.querySelector('.main');
