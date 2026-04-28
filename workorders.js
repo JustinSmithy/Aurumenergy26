@@ -94,14 +94,14 @@ function submitDelivery(){
   const dlFuelType=V('dl-fuel-type')==='Other — Please Specify'?(V('dl-fuel-type-other')||V('dl-fuel-type')):V('dl-fuel-type');
   const orderNum=V('dl-order-ref');
   deliveryLogs.unshift({date:nowDate(),time:nowTime(),badge:V('dl-badge'),name:V('dl-name'),rank:V('dl-rank'),vehicle:V('dl-vehicle'),usage:dlUsage,fuelType:dlFuelType,orderRef:orderNum,crew:V('dl-crew'),fuel:V('dl-fuel'),fp:fP[V('dl-fuel')]||62,cam:V('dl-dashcam')==='Yes',rep:rM[V('dl-repair')]||'none',maint:V('dl-maint').toLowerCase(),notes:V('dl-notes'),fleetNotes:V('dl-fleet-notes')});
-  persist('deliveryLogs');
+  saveDeliveryLogs(deliveryLogs);
   if(orderNum){
     const linkedOrder=orders.find(function(o){return o.number===orderNum;});
     if(linkedOrder&&linkedOrder.status!=='Completed'){
       linkedOrder.status='Completed';
       linkedOrder.completedAt=nowDate()+' '+nowTime();
       linkedOrder.completedBy=currentUser?currentUser.name:'—';
-      persist('orders');
+      saveOrders(orders);
       updateOrderStats();
       toast('✅','Delivery logged & Order '+orderNum+' marked Completed!','var(--green)');
     } else {
@@ -169,12 +169,12 @@ function updateFRStats(){
   document.getElementById('frSInc').textContent=fieldReports.filter(r=>r.type==='Incident / Accident').length;
   document.getElementById('frSAss').textContent=fieldReports.filter(r=>r.type==='Mechanical Failure').length;
 }
-function markFRComplete(i){if(!isAdmin())return;fieldReports[i].status='Completed';fieldReports[i].completedAt=nowDate()+' at '+nowTime();fieldReports[i].completedBy=currentUser?.name||'—';persist('fieldReports');renderFR(fieldReports);updateFRStats();toast('✅','Field report marked as complete!','var(--green)');}
+function markFRComplete(i){if(!isAdmin())return;fieldReports[i].status='Completed';fieldReports[i].completedAt=nowDate()+' at '+nowTime();fieldReports[i].completedBy=currentUser?.name||'—';saveFieldReports(fieldReports);renderFR(fieldReports);updateFRStats();toast('✅','Field report marked as complete!','var(--green)');}
 function submitFieldReport(){
   if(currentUser&&(V('fr-name').trim().toLowerCase()!==currentUser.name.trim().toLowerCase()||V('fr-badge').trim()!==currentUser.badge.trim())){toast('🚫','You can only submit on behalf of yourself.','var(--red)');return;}
   if(!V('fr-badge')||!V('fr-name')||!V('fr-type')||!V('fr-location')||!V('fr-vehicle')||!V('fr-outcome')||!V('fr-division')||!V('fr-desc')){toast('⚠️','Fill in all required fields.','var(--orange)');return;}
   const frTypeVal=V('fr-type')==='Other — Please Specify'?(V('fr-type-other')||V('fr-type')):V('fr-type');fieldReports.unshift({date:nowDate(),time:nowTime(),badge:V('fr-badge'),name:V('fr-name'),rank:V('fr-rank'),type:frTypeVal,location:V('fr-location'),vehicle:V('fr-vehicle'),outcome:V('fr-outcome'),parties:V('fr-parties'),division:V('fr-division'),orderRef:V('fr-order-ref'),status:V('fr-status')||'Open',crew:V('fr-crew'),fullDesc:V('fr-desc'),notes:V('fr-notes')});
-  persist('fieldReports');
+  saveFieldReports(fieldReports);
   ['fr-location','fr-vehicle','fr-parties','fr-desc','fr-notes','fr-type-other','fr-crew'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   ['fr-type','fr-outcome','fr-damage','fr-division','fr-order-ref','fr-status'].forEach(id=>{const el=document.getElementById(id);if(el)el.selectedIndex=0;});
   if(activeShift){activeShift.fieldReports++;document.getElementById('shFRC').textContent=activeShift.fieldReports;}
@@ -219,7 +219,7 @@ function submitIR(){
   if(currentUser&&(V('ir-name').trim().toLowerCase()!==currentUser.name.trim().toLowerCase()||V('ir-badge').trim()!==currentUser.badge.trim())){toast('🚫','You can only submit on behalf of yourself.','var(--red)');return;}
   if(!V('ir-badge')||!V('ir-name')||!V('ir-rank')||!V('ir-type')||!V('ir-severity')||!V('ir-location')||!V('ir-vehicle')||!V('ir-desc')){toast('⚠️','Fill in all required fields.','var(--orange)');return;}
   incidentReports.unshift({date:nowDate(),time:nowTime(),badge:V('ir-badge'),name:V('ir-name'),rank:V('ir-rank'),type:V('ir-type'),severity:V('ir-severity'),location:V('ir-location'),vehicle:V('ir-vehicle'),police:V('ir-police'),parties:V('ir-parties'),damage:V('ir-damage'),status:V('ir-status')||'Open — Under Review',fullDesc:V('ir-desc'),notes:V('ir-notes')});
-  persist('incidentReports');
+  saveIncidentReports(incidentReports);
   ['ir-location','ir-vehicle','ir-parties','ir-desc','ir-notes'].forEach(id=>document.getElementById(id).value='');
   ['ir-type','ir-severity','ir-police','ir-damage','ir-status'].forEach(id=>document.getElementById(id).selectedIndex=0);
   updateIRStats();renderIR(incidentReports);toast('🚨','Incident report filed!','var(--red)');showPage('incident-reports');
@@ -260,10 +260,10 @@ function renderOrders(data){
   w.innerHTML='<table><thead><tr><th>Date</th><th>Order #</th><th>Division</th><th>Title</th><th>Client</th><th>Type</th><th>Priority</th><th>Assigned To</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+rows+'</tbody></table>';
 }
 function updateOrderStats(){document.getElementById('orST').textContent=orders.length;document.getElementById('orSP').textContent=orders.filter(o=>o.status==='Pending').length;document.getElementById('orSI').textContent=orders.filter(o=>o.status==='In Transit').length;document.getElementById('orSD').textContent=orders.filter(o=>o.status==='Completed').length;}
-function markOrderComplete(i){if(!isAdmin())return;orders[i].status='Completed';orders[i].completedAt=nowDate()+' '+nowTime();orders[i].completedBy=currentUser?.name||'—';persist('orders');updateOrderStats();renderOrders(orders);toast('✅','Order marked as complete!','var(--green)');}
-function addOrder(){if(!isAdmin()){toast('🚫','Supervisors and Managers only.','var(--red)');return;}if(!V('ord-number')||!V('ord-title')||!V('ord-type')||!V('ord-division')){toast('⚠️','Fill in Order #, Division, Title and Type.','var(--orange)');return;}const ordTypeVal=V('ord-type')==='Other — Please Specify'?(V('ord-type-other')||V('ord-type')):V('ord-type');orders.unshift({date:nowDate(),time:nowTime(),number:V('ord-number'),division:V('ord-division'),title:V('ord-title'),client:V('ord-client'),type:ordTypeVal,priority:V('ord-priority')||'Normal',driver:V('ord-driver'),status:V('ord-status')||'Pending',notes:V('ord-notes'),locationImg:V('ord-location-img')});persist('orders');['ord-number','ord-title','ord-client','ord-notes','ord-type-other','ord-location-img'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});['ord-type','ord-division'].forEach(id=>{const el=document.getElementById(id);if(el)el.selectedIndex=0;});closeModal('orderModal');updateOrderStats();renderOrders(orders);populateOrderRefSelects();toast('✅','Order created!');}
-function cycleOrder(i){if(!isAdmin()){toast('🚫','Supervisors and Managers only.','var(--red)');return;}const s=orders[i].status;orders[i].status=s==='Pending'?'In Transit':s==='In Transit'?'Completed':'Pending';persist('orders');updateOrderStats();renderOrders(orders);toast('🔄',`Status: ${orders[i].status}`,'var(--blue)');}
-function delOrder(i){if(!isAdmin()){toast('🚫','Supervisors and Managers only.','var(--red)');return;}orders.splice(i,1);persist('orders');updateOrderStats();renderOrders(orders);toast('🗑','Order removed.','var(--text-3)');}
+function markOrderComplete(i){if(!isAdmin())return;orders[i].status='Completed';orders[i].completedAt=nowDate()+' '+nowTime();orders[i].completedBy=currentUser?.name||'—';saveOrders(orders);updateOrderStats();renderOrders(orders);toast('✅','Order marked as complete!','var(--green)');}
+function addOrder(){if(!isAdmin()){toast('🚫','Supervisors and Managers only.','var(--red)');return;}if(!V('ord-number')||!V('ord-title')||!V('ord-type')||!V('ord-division')){toast('⚠️','Fill in Order #, Division, Title and Type.','var(--orange)');return;}const ordTypeVal=V('ord-type')==='Other — Please Specify'?(V('ord-type-other')||V('ord-type')):V('ord-type');orders.unshift({date:nowDate(),time:nowTime(),number:V('ord-number'),division:V('ord-division'),title:V('ord-title'),client:V('ord-client'),type:ordTypeVal,priority:V('ord-priority')||'Normal',driver:V('ord-driver'),status:V('ord-status')||'Pending',notes:V('ord-notes'),locationImg:V('ord-location-img')});saveOrders(orders);['ord-number','ord-title','ord-client','ord-notes','ord-type-other','ord-location-img'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});['ord-type','ord-division'].forEach(id=>{const el=document.getElementById(id);if(el)el.selectedIndex=0;});closeModal('orderModal');updateOrderStats();renderOrders(orders);populateOrderRefSelects();toast('✅','Order created!');}
+function cycleOrder(i){if(!isAdmin()){toast('🚫','Supervisors and Managers only.','var(--red)');return;}const s=orders[i].status;orders[i].status=s==='Pending'?'In Transit':s==='In Transit'?'Completed':'Pending';saveOrders(orders);updateOrderStats();renderOrders(orders);toast('🔄',`Status: ${orders[i].status}`,'var(--blue)');}
+function delOrder(i){if(!isAdmin()){toast('🚫','Supervisors and Managers only.','var(--red)');return;}orders.splice(i,1);saveOrders(orders);updateOrderStats();renderOrders(orders);toast('🗑','Order removed.','var(--text-3)');}
 function viewOrder(i){
   const o=orders[i];if(!o)return;
   const pC={'Low':'var(--text-2)','Normal':'var(--blue)','High':'var(--orange)','Urgent':'var(--red)'};
@@ -310,8 +310,8 @@ function renderClients(data){
   g.innerHTML=out;
 }
 function updateClientStats(){document.getElementById('clST').textContent=clients.length;document.getElementById('clSA').textContent=clients.filter(c=>c.status==='Active').length;document.getElementById('clSP').textContent=clients.filter(c=>c.status==='Pending').length;}
-function addClient(){if(!isAdmin()){toast('🚫','Supervisors and Managers only.','var(--red)');return;}if(!V('cl-name')||!V('cl-contract')||!V('cl-status')){toast('⚠️','Fill in required fields.','var(--orange)');return;}clients.unshift({name:V('cl-name'),company:V('cl-company'),contract:V('cl-contract'),status:V('cl-status'),notes:V('cl-notes')});persist('clients');['cl-name','cl-company','cl-notes'].forEach(id=>document.getElementById(id).value='');['cl-contract','cl-status'].forEach(id=>document.getElementById(id).selectedIndex=0);closeModal('clientModal');updateClientStats();renderClients(clients);toast('✅','Client added!');}
+function addClient(){if(!isAdmin()){toast('🚫','Supervisors and Managers only.','var(--red)');return;}if(!V('cl-name')||!V('cl-contract')||!V('cl-status')){toast('⚠️','Fill in required fields.','var(--orange)');return;}clients.unshift({name:V('cl-name'),company:V('cl-company'),contract:V('cl-contract'),status:V('cl-status'),notes:V('cl-notes')});saveClients(clients);['cl-name','cl-company','cl-notes'].forEach(id=>document.getElementById(id).value='');['cl-contract','cl-status'].forEach(id=>document.getElementById(id).selectedIndex=0);closeModal('clientModal');updateClientStats();renderClients(clients);toast('✅','Client added!');}
 function editClient(i){const c=clients[i];document.getElementById('ecl-idx').value=i;document.getElementById('ecl-name').value=c.name;document.getElementById('ecl-company').value=c.company||'';document.getElementById('ecl-contract').value=c.contract||'';document.getElementById('ecl-status').value=c.status;document.getElementById('ecl-notes').value=c.notes||'';openModal('editClientModal');}
-function saveClient(){if(!isAdmin()){toast('🚫','Supervisors and Managers only.','var(--red)');return;}const i=parseInt(V('ecl-idx'));clients[i]={name:V('ecl-name'),company:V('ecl-company'),contract:V('ecl-contract'),status:V('ecl-status'),notes:V('ecl-notes')};persist('clients');closeModal('editClientModal');updateClientStats();renderClients(clients);toast('✅','Client updated!');}
-function delClient(i){if(!isAdmin()){toast('🚫','Supervisors and Managers only.','var(--red)');return;}clients.splice(i,1);persist('clients');updateClientStats();renderClients(clients);toast('🗑','Client removed.','var(--text-3)');}
+function saveClient(){if(!isAdmin()){toast('🚫','Supervisors and Managers only.','var(--red)');return;}const i=parseInt(V('ecl-idx'));clients[i]={name:V('ecl-name'),company:V('ecl-company'),contract:V('ecl-contract'),status:V('ecl-status'),notes:V('ecl-notes')};saveClients(clients);closeModal('editClientModal');updateClientStats();renderClients(clients);toast('✅','Client updated!');}
+function delClient(i){if(!isAdmin()){toast('🚫','Supervisors and Managers only.','var(--red)');return;}clients.splice(i,1);saveClients(clients);updateClientStats();renderClients(clients);toast('🗑','Client removed.','var(--text-3)');}
 document.getElementById('clSrch').addEventListener('input',e=>{const q=e.target.value.toLowerCase();renderClients(clients.filter(c=>c.name.toLowerCase().includes(q)||(c.company||'').toLowerCase().includes(q)));});
