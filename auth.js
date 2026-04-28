@@ -148,7 +148,7 @@ function updateChips(){
     const appl=applications.find(a=>a.status==='interview'&&a.phone===savedIcPhone);
     if(appl){icpEnter(appl,true);return;}
   }
-  const savedUsername=loadSession();
+  const savedUsername = null;
   if(savedUsername){
     const acc=accounts.find(a=>a.username===savedUsername&&a.status==='verified');
     if(acc){
