@@ -899,7 +899,7 @@ function rejectRR(i){if(!isAdmin())return;reimbursementRequests[i].status='Rejec
 
 // ── IC SESSION RESTORE ────────────────────────
 (function restoreIcSession(){
-  const phone=loadIcSession();
+  const savedIcPhone = null;
   if(!phone)return;
   const appl=applications.find(a=>a.phone===phone&&a.status==='interview');
   if(appl)icpEnter(appl,true);
