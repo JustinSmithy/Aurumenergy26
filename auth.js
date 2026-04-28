@@ -65,18 +65,18 @@ function doLogin(){
     return a.status==='interview'&&(phoneNorm===uNorm||a.phone.toLowerCase().trim()===u)&&(p.toLowerCase().trim()===nameNorm);
   });
   if(appl){if(btn){btn.textContent='Sign In';btn.disabled=false;btn.style.opacity='';}icpEnter(appl);return;}
-  const acc=accounts.find(a=>a.username===u&&a.password===p&&a.status==='verified');
+  const acc=loginUser(u,p);
   if(!acc){if(btn){btn.textContent='Sign In';btn.disabled=false;btn.style.opacity='';}document.getElementById('lErr').style.display='block';return;}
   document.getElementById('lErr').style.display='none';
   document.getElementById('authWrap').style.display='none';
   document.getElementById('app').classList.add('on');
   currentUser=acc;
-  lsSave(LS_KEYS.session,acc.username);
+  saveSession(acc.username);
   document.getElementById('sbAv').textContent=acc.initials;
   document.getElementById('sbName').textContent=acc.name;
   document.getElementById('sbRole').textContent=acc.role+' · #'+acc.badge;
   document.getElementById('adminNav').style.display=isAdmin()?'block':'none';
-  updateChips();populateRoleSelects();refreshAll();try{localStorage.removeItem('ae_last_page');}catch(e){}showPage('stats');
+  updateChips();populateRoleSelects();refreshAll();clearLastPage();showPage('stats');
   ['dl-badge','fr-badge','ir-badge','sf-badge','rr-badge'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=acc.badge;});
   ['dl-name','fr-name','ir-name','sf-name','rr-name'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=acc.name;});
   ['dl-rank','fr-rank','ir-rank','sf-role','rr-rank'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=acc.role;});
@@ -92,7 +92,7 @@ function doRegister(){
   const initials=(name.split(' ').map(w=>w[0]).join('')).toUpperCase().slice(0,2);
   const phone=V('rPhone')||'';const routing=V('rRouting')||'';
   accounts.push({username:user,password:pass,name,badge,role,status:'pending',initials,phone,routing});
-  persist('accounts');
+  savePersonnel(accounts);
   err.style.display='none';document.getElementById('rOk').style.display='block';
   ['rName','rUser','rPass','rBadge','rPhone','rRouting'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('rRole').selectedIndex=0;
@@ -105,20 +105,20 @@ function doRecoverRequest(){
   const err=document.getElementById('recErr');const ok=document.getElementById('recOk');
   if(!acc){err.style.display='block';ok.style.display='none';return;}
   if(!pendingResets.find(r=>r.username===user))pendingResets.push({username:user,name:acc.name,badge,requestedAt:nowDate()});
-  persist('pendingResets');
+  savePendingResets(pendingResets);
   err.style.display='none';ok.style.display='block';
 }
 
 function doLogout(){
   currentUser=null;activeShift=null;totalBreakMs=0;
-  lsSave(LS_KEYS.session,null);
+  clearSession();
   document.getElementById('app').classList.remove('on');
   document.getElementById('authWrap').style.display='flex';
   document.getElementById('lUser').value='';document.getElementById('lPass').value='';
   authTab('login');
 }
 function icpLogout(){
-  lsSave(LS_KEYS.icSession,null);
+  clearIcSession();
   document.getElementById('icPortal').classList.remove('on');
   document.getElementById('authWrap').style.display='flex';
   document.getElementById('lUser').value='';document.getElementById('lPass').value='';
@@ -143,12 +143,12 @@ function updateChips(){
 (function bootApp(){
   const _bm=document.querySelector('.main');
   if(_bm){_bm.style.backgroundImage='url('+_BG_DL+')';_bm.style.backgroundSize='cover';_bm.style.backgroundPosition='center';}
-  const savedIcPhone=lsLoad(LS_KEYS.icSession,null);
+  const savedIcPhone=loadIcSession();
   if(savedIcPhone){
     const appl=applications.find(a=>a.status==='interview'&&a.phone===savedIcPhone);
     if(appl){icpEnter(appl,true);return;}
   }
-  const savedUsername=lsLoad(LS_KEYS.session,null);
+  const savedUsername=loadSession();
   if(savedUsername){
     const acc=accounts.find(a=>a.username===savedUsername&&a.status==='verified');
     if(acc){
@@ -161,7 +161,7 @@ function updateChips(){
       document.getElementById('sbRole').textContent=acc.role+' · #'+acc.badge;
       document.getElementById('adminNav').style.display=(['Manager','Supervisor'].includes(acc.role))?'block':'none';
       updateChips();populateRoleSelects();
-      var _lp=localStorage.getItem('ae_last_page');showPage(_lp||'stats');
+      showPage(loadLastPage()||'stats');
       ['dl-badge','fr-badge','ir-badge','sf-badge','rr-badge'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=acc.badge;});
       ['dl-name','fr-name','ir-name','sf-name','rr-name'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=acc.name;});
       ['dl-rank','fr-rank','ir-rank','sf-role','rr-rank'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=acc.role;});
