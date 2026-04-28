@@ -3,6 +3,7 @@
 // All persistence is handled exclusively in api.js.
 // Nothing here calls localStorage directly.
 // ════════════════════════════════════════════
+function checkInsuranceExpiry() {}
 const DEFAULT_ACCOUNTS=[{username:'justin',password:'logistics',name:'Justin Driver',badge:'4721',role:'Manager',status:'verified',initials:'JD'}];
 const DEFAULT_FLEET=[
   {plate:'ESK285',category:'Trucking',type:'Benefactor Imperial EV',status:'Operational',condition:'Good',maint:'Green — No Issues',fuel:'>75% — Full'},
