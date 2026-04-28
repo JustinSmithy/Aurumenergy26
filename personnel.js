@@ -900,7 +900,11 @@ function rejectRR(i){if(!isAdmin())return;reimbursementRequests[i].status='Rejec
 // ── IC SESSION RESTORE ────────────────────────
 (function restoreIcSession(){
   const savedIcPhone = null;
-  if(!phone)return;
-  const appl=applications.find(a=>a.phone===phone&&a.status==='interview');
-  if(appl)icpEnter(appl,true);
+  if(!savedIcPhone) return;
+
+  const appl = applications.find(
+    a => a.phone === savedIcPhone && a.status === 'interview'
+  );
+
+  if(appl) icpEnter(appl, true);
 })();
