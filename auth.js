@@ -1,6 +1,7 @@
 // ════════════════════════════════════════════
 // AUTH — login, register, recover, logout, session, info panels
 // ════════════════════════════════════════════
+
 function showInfoPanel(key){
   const map={about:'infoAbout',services:'infoServices',safety:'infoSafety',contact:'infoContact'};
   const labelMap={about:'About Us',services:'Services',safety:'Safety',contact:'Contact'};
