@@ -7,6 +7,11 @@
 // ── FORWARD STUBS ─────────────────────────────
 // updateChips is defined in auth.js which loads after this file.
 function updateChips(){}
+// loadIcSession is defined in api.js — stub guards against load-order gap.
+function loadIcSession(){ return null; }
+// activeShift is declared in app.js but personnel.js references it before
+// app.js execution is guaranteed in all paths.
+let activeShift = null;
 
 // ── ROLES ────────────────────────────────────
 function populateRoleSelects(){
