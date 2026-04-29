@@ -1,7 +1,8 @@
-function loadSession() { return null; }
 // ════════════════════════════════════════════
 // AUTH — login, register, recover, logout, session, info panels
 // ════════════════════════════════════════════
+
+const _BG_DL = "https://i.postimg.cc/YqLfMBCd/login-background.jpg";
 
 function showInfoPanel(key){
   const map={about:'infoAbout',services:'infoServices',safety:'infoSafety',contact:'infoContact'};
@@ -85,15 +86,17 @@ function doLogin(){
 }
 ['lPass','lUser'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});});
 
-function doRegister(){
+async function doRegister(){
   const name=V('rName'),user=V('rUser').toLowerCase(),pass=V('rPass'),badge=V('rBadge'),role=V('rRole');
   const err=document.getElementById('rErr');
   if(!name||!user||!pass||!badge||!role){err.textContent='⚠ Please fill in all fields.';err.style.display='block';return;}
   if(accounts.find(a=>a.username===user)){err.textContent='⚠ Username already taken.';err.style.display='block';return;}
   const initials=(name.split(' ').map(w=>w[0]).join('')).toUpperCase().slice(0,2);
   const phone=V('rPhone')||'';const routing=V('rRouting')||'';
-  accounts.push({username:user,password:pass,name,badge,role,status:'pending',initials,phone,routing});
-  savePersonnel(accounts);
+  const newRecord={username:user,password:pass,name,badge,role,status:'pending',initials,phone,routing};
+  const inserted=await insertPersonnel(newRecord);
+  if(!inserted){err.textContent='⚠ Could not save account. Please try again.';err.style.display='block';return;}
+  accounts.push(inserted);
   err.style.display='none';document.getElementById('rOk').style.display='block';
   ['rName','rUser','rPass','rBadge','rPhone','rRouting'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('rRole').selectedIndex=0;
@@ -140,16 +143,28 @@ function updateChips(){
 
 // ════════════════════════════════════════════
 // SESSION RESTORE + BOOT
+// Async because personnel data must be fetched
+// from Supabase before session can be restored.
 // ════════════════════════════════════════════
-(function bootApp(){
+async function initPersonnel(){
+  const rows=await fetchPersonnel();
+  // Populate the shared in-memory array declared in app.js
+  accounts.splice(0,accounts.length,...rows);
+}
+
+(async function bootApp(){
   const _bm=document.querySelector('.main');
   if(_bm){_bm.style.backgroundImage='url('+_BG_DL+')';_bm.style.backgroundSize='cover';_bm.style.backgroundPosition='center';}
-  const savedIcPhone = null;
+
+  // Must load personnel from Supabase before any auth check
+  await initPersonnel();
+
+  const savedIcPhone=loadIcSession();
   if(savedIcPhone){
     const appl=applications.find(a=>a.status==='interview'&&a.phone===savedIcPhone);
     if(appl){icpEnter(appl,true);return;}
   }
-  const savedUsername = null;
+  const savedUsername=loadSession();
   if(savedUsername){
     const acc=accounts.find(a=>a.username===savedUsername&&a.status==='verified');
     if(acc){
@@ -173,4 +188,3 @@ function updateChips(){
   document.getElementById('authWrap').style.display='flex';
   authTab('login');
 })();
-
