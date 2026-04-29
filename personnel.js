@@ -4,6 +4,10 @@
 //             crew picker, reimbursements
 // ════════════════════════════════════════════
 
+// ── FORWARD STUBS ─────────────────────────────
+// updateChips is defined in auth.js which loads after this file.
+function updateChips(){}
+
 // ── ROLES ────────────────────────────────────
 function populateRoleSelects(){
   const all=allRoles();
@@ -124,9 +128,30 @@ function renderAccounts(){
   w.innerHTML=resetsHtml+'<table><thead><tr><th>Name</th><th>Username</th><th>Badge</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+rows+'</tbody></table>';
   updateChips();
 }
-function verifyAcc(i){accounts[i].status='verified';savePersonnel(accounts);logRoleEvent('Account Verified',accounts[i].name,'—','Verified',currentUser?.name||'System');renderAccounts();toast('✅',accounts[i].name+' verified!');updateChips();}
-function rejectAcc(i){accounts[i].status='rejected';savePersonnel(accounts);logRoleEvent('Account Rejected',accounts[i].name,'—','Rejected',currentUser?.name||'System');renderAccounts();toast('✕','Account rejected.','var(--red)');updateChips();}
-function removeAcc(i){const n=accounts[i].name;logRoleEvent('Account Removed',n,accounts[i].role,'—',currentUser?.name||'System');accounts.splice(i,1);savePersonnel(accounts);renderAccounts();toast('🗑','Account removed.','var(--text-3)');}
+async function verifyAcc(i){
+  const a=accounts[i];
+  const updated=await updatePersonnel(a.id,{status:'verified'});
+  if(!updated){toast('⚠️','Failed to verify account.','var(--red)');return;}
+  a.status='verified';
+  logRoleEvent('Account Verified',a.name,'—','Verified',currentUser?.name||'System');
+  renderAccounts();toast('✅',a.name+' verified!');updateChips();
+}
+async function rejectAcc(i){
+  const a=accounts[i];
+  const updated=await updatePersonnel(a.id,{status:'rejected'});
+  if(!updated){toast('⚠️','Failed to reject account.','var(--red)');return;}
+  a.status='rejected';
+  logRoleEvent('Account Rejected',a.name,'—','Rejected',currentUser?.name||'System');
+  renderAccounts();toast('✕','Account rejected.','var(--red)');updateChips();
+}
+async function removeAcc(i){
+  const a=accounts[i];
+  const ok=await deletePersonnel(a.id);
+  if(!ok){toast('⚠️','Failed to remove account.','var(--red)');return;}
+  logRoleEvent('Account Removed',a.name,a.role,'—',currentUser?.name||'System');
+  accounts.splice(i,1);
+  renderAccounts();toast('🗑','Account removed.','var(--text-3)');
+}
 function openChangeBadge(i){
   const a=accounts[i];
   document.getElementById('cbIdx').value=i;
@@ -135,13 +160,14 @@ function openChangeBadge(i){
   document.getElementById('cbNew').value='';
   openModal('changeBadgeModal');
 }
-function confirmChangeBadge(){
+async function confirmChangeBadge(){
   const i=parseInt(document.getElementById('cbIdx').value);
   const nb=document.getElementById('cbNew').value.trim();
   if(!nb){toast('⚠️','Enter a badge number.','var(--orange)');return;}
   const old=accounts[i].badge;
+  const updated=await updatePersonnel(accounts[i].id,{badge:nb});
+  if(!updated){toast('⚠️','Failed to update badge.','var(--red)');return;}
   accounts[i].badge=nb;
-  savePersonnel(accounts);
   logRoleEvent('Badge Changed',accounts[i].name,old,nb,currentUser?.name||'System');
   closeModal('changeBadgeModal');
   renderAccounts();
@@ -155,17 +181,19 @@ function openChangeName(i){
   document.getElementById('cnNew').value='';
   openModal('changeNameModal');
 }
-function confirmChangeName(){
+async function confirmChangeName(){
   const i=parseInt(document.getElementById('cnIdx').value);
   const nn=document.getElementById('cnNew').value.trim();
   if(!nn){toast('⚠️','Enter a new name.','var(--orange)');return;}
   const old=accounts[i].name;
+  const newInitials=nn.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  const updated=await updatePersonnel(accounts[i].id,{name:nn,initials:newInitials});
+  if(!updated){toast('⚠️','Failed to update name.','var(--red)');return;}
   accounts[i].name=nn;
-  accounts[i].initials=nn.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-  savePersonnel(accounts);
+  accounts[i].initials=newInitials;
   logRoleEvent('Name Changed',nn,old,nn,currentUser?.name||'System');
   if(currentUser&&currentUser.username===accounts[i].username){
-    currentUser.name=nn;currentUser.initials=accounts[i].initials;
+    currentUser.name=nn;currentUser.initials=newInitials;
     document.getElementById('sbName').textContent=nn;
   }
   closeModal('changeNameModal');
@@ -196,23 +224,24 @@ function openChangeRole(i){
   addGroup('Custom Roles',custom);
   openModal('changeRoleModal');
 }
-function confirmChangeRole(){
+async function confirmChangeRole(){
   const i=parseInt(document.getElementById('crIdx').value);
   const newRole=V('crRole');
   if(!newRole){toast('⚠️','Please select a role.','var(--orange)');return;}
   const a=accounts[i];
   const prev=a.role;
-  a.role=newRole;
   const adminLevels=['Manager','Supervisor'];
   const wasAdmin=adminLevels.includes(prev);
-  const isAdmin=adminLevels.includes(newRole);
-  const action=isAdmin&&!wasAdmin?'Promoted':!isAdmin&&wasAdmin?'Demoted':'Role Changed';
+  const isAdminRole=adminLevels.includes(newRole);
+  const action=isAdminRole&&!wasAdmin?'Promoted':!isAdminRole&&wasAdmin?'Demoted':'Role Changed';
+  const updated=await updatePersonnel(a.id,{role:newRole});
+  if(!updated){toast('⚠️','Failed to update role.','var(--red)');return;}
+  a.role=newRole;
   logRoleEvent(action,a.name,prev,newRole,currentUser?.name||'System');
-  savePersonnel(accounts);
   closeModal('changeRoleModal');
   renderAccounts();
   populateRoleSelects();
-  toast(isAdmin&&!wasAdmin?'⬆️':!isAdmin&&wasAdmin?'⬇️':'🎖️',`${a.name} → ${newRole}`,'var(--purple)');
+  toast(isAdminRole&&!wasAdmin?'⬆️':!isAdminRole&&wasAdmin?'⬇️':'🎖️',`${a.name} → ${newRole}`,'var(--purple)');
 }
 function openResetPw(i){document.getElementById('rpIdx').value=i;openModal('resetPwModal');}
 function viewAccount(i){
@@ -221,11 +250,12 @@ function viewAccount(i){
   document.getElementById('prevBody').innerHTML=`<div style="padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px"><div style="width:44px;height:44px;background:linear-gradient(135deg,var(--amber),var(--amber-dim));border-radius:var(--rl);display:flex;align-items:center;justify-content:center;font-family:Space Grotesk,sans-serif;font-size:16px;font-weight:700;color:#000">${a.initials||a.name.slice(0,2).toUpperCase()}</div><div><div style="font-family:Space Grotesk,sans-serif;font-size:16px;font-weight:600">${a.name}</div><div style="font-size:11px;color:var(--text-3);font-family:JetBrains Mono,monospace">@${a.username}</div></div></div>${pGrid(pRow('BADGE',a.badge),pRow('ROLE',a.role),pRow('STATUS',a.status.charAt(0).toUpperCase()+a.status.slice(1)),'')}`; 
   openModal('prevModal');
 }
-function doResetPw(){
+async function doResetPw(){
   const i=parseInt(V('rpIdx'));const pw=V('rpNew');
   if(!pw){toast('⚠️','Enter a new password.','var(--orange)');return;}
+  const updated=await updatePersonnel(accounts[i].id,{password:pw});
+  if(!updated){toast('⚠️','Failed to reset password.','var(--red)');return;}
   accounts[i].password=pw;
-  savePersonnel(accounts);
   const user=accounts[i].username;
   const ri=pendingResets.findIndex(r=>r.username===user);if(ri>=0)pendingResets.splice(ri,1);
   savePendingResets(pendingResets);
@@ -353,13 +383,15 @@ function viewApplication(i){
   }
   openModal('applPrevModal');
 }
-function acceptApplication(i){
+async function acceptApplication(i){
   const a=applications[i];a.status='accepted';
   const uname=a.name.toLowerCase().replace(/\s+/g,'_').slice(0,12);
   const pw='aurum'+Math.floor(1000+Math.random()*9000);
-  const initials=(a.name.split(' ').map(w=>w[0]).join('')).toUpperCase().slice(0,2);
-  accounts.push({username:uname,password:pw,name:a.name,badge:'NEW',role:a.role,status:'pending',initials:(a.name.split(' ').map(w=>w[0]||'').join('')).toUpperCase().slice(0,2),phone:a.phone||'',routing:a.routing||''});
-  savePersonnel(accounts);saveApplications(applications);
+  const newRecord={username:uname,password:pw,name:a.name,badge:'NEW',role:a.role,status:'pending',initials:(a.name.split(' ').map(w=>w[0]||'').join('')).toUpperCase().slice(0,2),phone:a.phone||'',routing:a.routing||''};
+  const inserted=await insertPersonnel(newRecord);
+  if(!inserted){toast('⚠️','Failed to create account for applicant.','var(--red)');return;}
+  accounts.push(inserted);
+  saveApplications(applications);
   renderApplications();updateChips();
   document.getElementById('credName').textContent=a.name;
   document.getElementById('credUser').textContent=uname;
@@ -899,12 +931,8 @@ function rejectRR(i){if(!isAdmin())return;reimbursementRequests[i].status='Rejec
 
 // ── IC SESSION RESTORE ────────────────────────
 (function restoreIcSession(){
-  const savedIcPhone = null;
-  if(!savedIcPhone) return;
-
-  const appl = applications.find(
-    a => a.phone === savedIcPhone && a.status === 'interview'
-  );
-
-  if(appl) icpEnter(appl, true);
+  const phone=loadIcSession();
+  if(!phone)return;
+  const appl=applications.find(a=>a.phone===phone&&a.status==='interview');
+  if(appl)icpEnter(appl,true);
 })();
