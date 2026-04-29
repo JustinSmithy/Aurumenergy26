@@ -93,7 +93,12 @@ const DEFAULT_FLEET=[
 // All other arrays remain localStorage-backed for now.
 let accounts                 = [];                        // filled by initPersonnel()
 const pendingResets          = fetchPendingResets();
-const applications           = fetchApplications();
+let applications = [];
+
+fetchApplications().then(data => {
+  applications = data;
+  renderApplications(); // refresh UI AFTER data loads
+});
 const deliveryLogs         = fetchDeliveryLogs();
 const fieldReports         = fetchFieldReports();
 const incidentReports      = fetchIncidentReports();
