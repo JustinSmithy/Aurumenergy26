@@ -14,6 +14,10 @@
 // ── Internal localStorage helpers (private) ──
 // These are the ONLY place in the codebase that
 // should reference localStorage directly.
+const supabase = window.supabase.createClient(
+  "https://cjzjlfpccdlmqjadgdax.supabase.co",
+  "sb_publishable_j89NCUX9ZNx9NiTvuqpEaQ_FjDM90uR"
+);
 const _LS = {
   get(key, fallback) {
     try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
@@ -190,16 +194,17 @@ function savePendingResets(data) {
  * Returns all job applications.
  * → Replace with: GET /api/applications
  */
-function fetchApplications() {
-  return _LS.get(_K.applications, []);
-}
+async function fetchApplications() {
+  const { data, error } = await supabase
+    .from('applications')
+    .select('*');
 
-/**
- * saveApplications(data)
- * → Replace with: PUT /api/applications  (or PATCH per record)
- */
-function saveApplications(data) {
-  _LS.set(_K.applications, data);
+  if (error) {
+    console.error('Supabase error:', error);
+    return [];
+  }
+
+  return data;
 }
 
 // ════════════════════════════════════════════
