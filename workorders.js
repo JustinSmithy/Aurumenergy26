@@ -3,6 +3,10 @@
 //              incident reports, orders, clients
 // ════════════════════════════════════════════
 
+// ── FORWARD STUBS ─────────────────────────────
+// initCrewPicker is defined in personnel.js (loads after).
+function initCrewPicker(){}
+
 // ── POPULATE ORDER REF SELECTS ────────────────
 function populateOrderRefSelects(){
   var dlSel=document.getElementById('dl-order-ref');
