@@ -1,9 +1,49 @@
 // ════════════════════════════════════════════
+// FORWARD STUBS — functions defined in later-loading
+// files (vehicles.js, workorders.js, personnel.js).
+// These are replaced by the real implementations at
+// runtime. They exist solely to prevent
+// "is not defined" errors during app.js parse/init.
+// ════════════════════════════════════════════
+function checkAssignedShift(){}
+function checkInsuranceExpiry(){}
+function initCrewPicker(){}
+function populateAssignForm(){}
+function populateMaintVehicleSelect(){}
+function populateOrderDriverSelect(){}
+function populateOrderRefSelects(){}
+function populateShiftVehicle(){}
+function populateVehicleSelect(){}
+function renderAccounts(){}
+function renderApplications(){}
+function renderAssignedShifts(){}
+function renderClients(){}
+function renderDL(){}
+function renderFR(){}
+function renderFleet(){}
+function renderIR(){}
+function renderMaintDamage(){}
+function renderMaintService(){}
+function renderMyShifts(){}
+function renderMyStats(){}
+function renderOrders(){}
+function renderRR(){}
+function renderRoleLogs(){}
+function renderRoles(){}
+function renderShiftHistory(){}
+function updateClientStats(){}
+function updateDLStats(){}
+function updateFRStats(){}
+function updateFleetStats(){}
+function updateIRStats(){}
+function updateOrderStats(){}
+function updateRRStats(){}
+
+// ════════════════════════════════════════════
 // DATA — runtime arrays, seeded via api.js
 // All persistence is handled exclusively in api.js.
 // Nothing here calls localStorage directly.
 // ════════════════════════════════════════════
-function checkInsuranceExpiry() {}
 const DEFAULT_ACCOUNTS=[{username:'justin',password:'logistics',name:'Justin Driver',badge:'4721',role:'Manager',status:'verified',initials:'JD'}];
 const DEFAULT_FLEET=[
   {plate:'ESK285',category:'Trucking',type:'Benefactor Imperial EV',status:'Operational',condition:'Good',maint:'Green — No Issues',fuel:'>75% — Full'},
@@ -48,22 +88,24 @@ const DEFAULT_FLEET=[
   {plate:'AURUM3',category:'Utility',type:'Seaclamo',status:'Operational',condition:'Good',maint:'Green — No Issues',fuel:'>75% — Full'},
   {plate:'N108BA',category:'Air',type:'Cargobob',status:'Operational',condition:'Good',maint:'Green — No Issues',fuel:'>75% — Full'},
 ];
-const accounts             = [];
-const pendingResets        = [];
-const applications         = [];
-const deliveryLogs         = [];
-const fieldReports         = [];
-const incidentReports      = [];
-const clients              = [];
-const fleet                = [];
-const orders               = [];
-const shiftHistory         = [];
-const assignedShifts       = [];
-const customRoles          = [];
-const maintenanceServiceLogs = [];
-const roleLogs             = [];
-const reimbursementRequests = [];
-const icMessages           = [];
+// accounts is populated async from Supabase at boot (see initPersonnel() in auth.js).
+// All other arrays remain localStorage-backed for now.
+let accounts                 = [];                        // filled by initPersonnel()
+const pendingResets          = fetchPendingResets();
+const applications           = fetchApplications();
+const deliveryLogs         = fetchDeliveryLogs();
+const fieldReports         = fetchFieldReports();
+const incidentReports      = fetchIncidentReports();
+const clients              = fetchClients();
+const fleet                = fetchFleet();
+const orders               = fetchOrders();
+const shiftHistory         = fetchShiftHistory();
+const assignedShifts       = fetchAssignedShifts();
+const customRoles          = fetchCustomRoles();
+const maintenanceServiceLogs = fetchMaintenanceLogs();
+const roleLogs             = fetchRoleLogs();
+const reimbursementRequests = fetchReimbursements();
+const icMessages           = fetchIcMessages();
 
 const BUILTIN_ROLES=[
   {name:'Manager',code:'',access:'manager',desc:'Full portal access. Approves hires, sets policy, and oversees all departments.',builtin:true},
