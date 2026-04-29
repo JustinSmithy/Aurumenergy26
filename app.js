@@ -124,7 +124,7 @@ const BUILTIN_ROLES=[
   {name:'OFFSHORE — Supervisor',code:'AEO-S1',access:'supervisor',desc:'Aurum Energy Offshore — Supervising position on the rig. Responsible for crew safety and operational standards.',builtin:true},
   {name:'Energy Intern',code:'AE-I1',access:'employee',desc:'Aurum Energy — Work experience programme. Learn what Aurum Energy does across all operational departments.',builtin:true},
 ];
-let currentUser=null,activeShift=null,totalBreakMs=0,breakStart=null;
+let currentUser=null,totalBreakMs=0,breakStart=null;
 
 // ════════════════════════════════════════════
 // SHARED HELPERS
