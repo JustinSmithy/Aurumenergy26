@@ -5,6 +5,7 @@
 // runtime. They exist solely to prevent
 // "is not defined" errors during app.js parse/init.
 // ════════════════════════════════════════════
+function fetchPendingResets(){ return []; }
 function checkAssignedShift(){}
 function checkInsuranceExpiry(){}
 function initCrewPicker(){}
@@ -143,7 +144,6 @@ const mS=m=>(m||'').split(' — ')[0]||m||'—';
 const fS=f=>(f||'').split(' — ')[0]||f||'—';
 const fmtDur=ms=>{const s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sc=s%60;return`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;};
 const fmtShort=ms=>{const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000);return h>0?`${h}h ${m}m`:`${m}m`;};
-const _BG_DL="https://i.ibb.co/W4nVykr6/faq-image-3.webp";
 const _BG_STATS="https://i.ibb.co/bgVsX8gs/faq-image-4.webp";
 const _BG_MYSTATS="https://i.ibb.co/4Z6trBtQ/faq-image-5.webp";
 const _BG_FIELDREPORTS="https://i.ibb.co/zhLyF9rf/faq-image-6.webp";
