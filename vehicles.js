@@ -2,6 +2,12 @@
 // VEHICLES — fleet registry and maintenance
 // ════════════════════════════════════════════
 
+// ── FORWARD STUBS ─────────────────────────────
+// populateShiftVehicle is defined in personnel.js (loads after).
+// populateVehicleSelect is defined in workorders.js (loads after).
+function populateShiftVehicle(){}
+function populateVehicleSelect(){}
+
 // ── INSURANCE EXPIRY HELPERS ──────────────────
 function insExpiryStatus(v){
   if(!v)return null;
