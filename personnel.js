@@ -9,9 +9,7 @@
 function updateChips(){}
 // loadIcSession is defined in api.js — stub guards against load-order gap.
 function loadIcSession(){ return null; }
-// activeShift is declared in app.js but personnel.js references it before
-// app.js execution is guaranteed in all paths.
-let activeShift = null;
+// activeShift is declared in app.js (loads before personnel.js).
 
 // ── ROLES ────────────────────────────────────
 function populateRoleSelects(){
