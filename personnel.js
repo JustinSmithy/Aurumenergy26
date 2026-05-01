@@ -306,7 +306,7 @@ function switchApplyDiv(div){
     sel.innerHTML+='<optgroup label="— Aurum Corporation —">'+corp.map(r=>`<option value="${r.v}">${r.l}</option>`).join('')+'</optgroup>';
   }
 }
-function submitApplication(){
+async function submitApplication(){
   const name=V('apName'),phone=V('apPhone'),age=V('apAge'),nat=V('apNat'),role=V('apRole'),exp=V('apExp'),why=V('apWhy'),notes=V('apNotes');
   const division=V('apDivision')||'ops';
   const err=document.getElementById('apErr');const ok=document.getElementById('apOk');
@@ -318,8 +318,10 @@ function submitApplication(){
   }
   const bgCheck=division==='corp'?V('apBgCheck'):'n/a';
   const nda=division==='corp'?V('apNda'):'n/a';
-  applications.push({name,phone,age,nationality:nat,role,division:division==='corp'?'Aurum Corporation':'Aurum Energy — Operations',experience:exp,reason:why,notes,bgCheck,nda,routing:V('apRouting'),submittedAt:nowDate(),status:'pending'});
-  await saveApplications(applications);
+  const newApp = {name,phone,age,nationality:nat,role,division:division==='corp'?'Aurum Corporation':'Aurum Energy — Operations',experience:exp,reason:why,notes,bgCheck,nda,routing:V('apRouting'),submittedAt:nowDate(),status:'pending'};
+  const saved = await saveApplication(newApp);
+  if (saved) applications.push(saved);
+  else applications.push(newApp);
   err.style.display='none';ok.style.display='block';
   ['apName','apPhone','apAge','apNat','apExp','apWhy','apNotes'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('apRole').selectedIndex=0;
@@ -394,7 +396,7 @@ async function acceptApplication(i){
   const inserted=await insertPersonnel(newRecord);
   if(!inserted){toast('⚠️','Failed to create account for applicant.','var(--red)');return;}
   accounts.push(inserted);
-  await saveApplications(applications);
+  await saveApplication(applications[i]);
   renderApplications();updateChips();
   document.getElementById('credName').textContent=a.name;
   document.getElementById('credUser').textContent=uname;
@@ -402,10 +404,10 @@ async function acceptApplication(i){
   document.getElementById('credRole').textContent=a.role;
   openModal('credentialsModal');
 }
-function rejectApplication(i){applications[i].status='rejected';await saveApplications(applications);renderApplications();updateChips();toast('✕','Application rejected.','var(--red)');}
-function moveToInterview(i){
+async function rejectApplication(i){applications[i].status='rejected';await saveApplication(applications[i]);renderApplications();updateChips();toast('✕','Application rejected.','var(--red)');}
+async function moveToInterview(i){
   if(!isAdmin()){toast('🚫','Supervisors and Managers only.','var(--red)');return;}
-  applications[i].status='interview';await saveApplications(applications);renderApplications();updateChips();
+  applications[i].status='interview';await saveApplication(applications[i]);renderApplications();updateChips();
   toast('📅',applications[i].name+' moved to Interview stage.','var(--blue)');
 }
 
