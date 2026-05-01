@@ -93,20 +93,8 @@ const DEFAULT_FLEET=[
 // All other arrays remain localStorage-backed for now.
 let accounts                 = [];                        // filled by initPersonnel()
 const pendingResets          = fetchPendingResets();
-let applications = [];
-
-async function fetchApplications() {
-  const { data, error } = await _supabase
-    .from('applications')
-    .select('*');
-
-  if (error) {
-    console.error(error);
-    return [];
-  }
-
-  return data;
-}
+let applications             = [];
+fetchApplications().then(data => { applications = data; renderApplications(); });
 const deliveryLogs         = fetchDeliveryLogs();
 const fieldReports         = fetchFieldReports();
 const incidentReports      = fetchIncidentReports();
