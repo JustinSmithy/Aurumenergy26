@@ -95,10 +95,18 @@ let accounts                 = [];                        // filled by initPerso
 const pendingResets          = fetchPendingResets();
 let applications = [];
 
-fetchApplications().then(data => {
-  applications = data;
-  renderApplications(); // refresh UI AFTER data loads
-});
+async function fetchApplications() {
+  const { data, error } = await _supabase
+    .from('applications')
+    .select('*');
+
+  if (error) {
+    console.error(error);
+    return [];
+  }
+
+  return data;
+}
 const deliveryLogs         = fetchDeliveryLogs();
 const fieldReports         = fetchFieldReports();
 const incidentReports      = fetchIncidentReports();
