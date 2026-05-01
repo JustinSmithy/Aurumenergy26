@@ -206,6 +206,15 @@ async function fetchApplications() {
 
   return data;
 }
+async function saveApplication(application) {
+  const { error } = await supabase
+    .from('applications')
+    .upsert([application], { onConflict: 'id' });
+
+  if (error) {
+    console.error('[saveApplication]', error.message);
+  }
+}
 
 // ════════════════════════════════════════════
 // ROLES
