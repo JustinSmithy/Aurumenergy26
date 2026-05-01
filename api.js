@@ -14,6 +14,8 @@
 // ── Internal localStorage helpers (private) ──
 // These are the ONLY place in the codebase that
 // should reference localStorage directly.
+// Single Supabase client — referenced everywhere as _supabase.
+// Never declare a bare `const supabase` to avoid Firefox redeclaration errors.
 const _supabase = window.supabase.createClient(
   'https://YOUR_PROJECT_ID.supabase.co',
   'YOUR_PUBLIC_ANON_KEY'
@@ -191,28 +193,63 @@ function savePendingResets(data) {
 
 /**
  * fetchApplications()
- * Returns all job applications.
- * → Replace with: GET /api/applications
+ * Returns all job applications from Supabase.
  */
 async function fetchApplications() {
-  const { data, error } = await supabase
+  const { data, error } = await _supabase
     .from('applications')
     .select('*');
 
   if (error) {
-    console.error('Supabase error:', error);
+    console.error('[fetchApplications]', error.message);
     return [];
   }
 
-  return data;
+  return data ?? [];
 }
-async function saveApplication(application) {
-  const { error } = await supabase
-    .from('applications')
-    .upsert([application], { onConflict: 'id' });
 
-  if (error) {
-    console.error('[saveApplication]', error.message);
+/**
+ * saveApplication(record)
+ * Inserts a new record (no id) or updates an existing one (has id).
+ * Returns the saved record, or null on failure.
+ */
+async function saveApplication(record) {
+  if (record.id) {
+    const { data, error } = await _supabase
+      .from('applications')
+      .update(record)
+      .eq('id', record.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[saveApplication update]', error.message);
+      return null;
+    }
+    return data;
+  } else {
+    const { data, error } = await _supabase
+      .from('applications')
+      .insert([record])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[saveApplication insert]', error.message);
+      return null;
+    }
+    return data;
+  }
+}
+
+/**
+ * saveApplications(array)
+ * Saves each record individually via saveApplication.
+ * Used by legacy callers that pass the full array.
+ */
+async function saveApplications(arr) {
+  for (const record of arr) {
+    await saveApplication(record);
   }
 }
 
