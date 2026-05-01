@@ -319,7 +319,7 @@ function submitApplication(){
   const bgCheck=division==='corp'?V('apBgCheck'):'n/a';
   const nda=division==='corp'?V('apNda'):'n/a';
   applications.push({name,phone,age,nationality:nat,role,division:division==='corp'?'Aurum Corporation':'Aurum Energy — Operations',experience:exp,reason:why,notes,bgCheck,nda,routing:V('apRouting'),submittedAt:nowDate(),status:'pending'});
-  saveApplications(applications);
+  await saveApplications(applications);
   err.style.display='none';ok.style.display='block';
   ['apName','apPhone','apAge','apNat','apExp','apWhy','apNotes'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('apRole').selectedIndex=0;
@@ -394,7 +394,7 @@ async function acceptApplication(i){
   const inserted=await insertPersonnel(newRecord);
   if(!inserted){toast('⚠️','Failed to create account for applicant.','var(--red)');return;}
   accounts.push(inserted);
-  saveApplications(applications);
+  await saveApplications(applications);
   renderApplications();updateChips();
   document.getElementById('credName').textContent=a.name;
   document.getElementById('credUser').textContent=uname;
@@ -402,10 +402,10 @@ async function acceptApplication(i){
   document.getElementById('credRole').textContent=a.role;
   openModal('credentialsModal');
 }
-function rejectApplication(i){applications[i].status='rejected';saveApplications(applications);renderApplications();updateChips();toast('✕','Application rejected.','var(--red)');}
+function rejectApplication(i){applications[i].status='rejected';await saveApplications(applications);renderApplications();updateChips();toast('✕','Application rejected.','var(--red)');}
 function moveToInterview(i){
   if(!isAdmin()){toast('🚫','Supervisors and Managers only.','var(--red)');return;}
-  applications[i].status='interview';saveApplications(applications);renderApplications();updateChips();
+  applications[i].status='interview';await saveApplications(applications);renderApplications();updateChips();
   toast('📅',applications[i].name+' moved to Interview stage.','var(--blue)');
 }
 
