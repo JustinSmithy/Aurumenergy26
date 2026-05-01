@@ -14,9 +14,9 @@
 // ── Internal localStorage helpers (private) ──
 // These are the ONLY place in the codebase that
 // should reference localStorage directly.
-const supabase = window.supabase.createClient(
-  "https://cjzjlfpccdlmqjadgdax.supabase.co",
-  "sb_publishable_j89NCUX9ZNx9NiTvuqpEaQ_FjDM90uR"
+const _supabase = window.supabase.createClient(
+  'https://YOUR_PROJECT_ID.supabase.co',
+  'YOUR_PUBLIC_ANON_KEY'
 );
 const _LS = {
   get(key, fallback) {
