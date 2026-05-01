@@ -111,7 +111,8 @@ function renderAccounts(){
   var rows='';
   accounts.forEach(function(a,i){
     var isAdmin2=['Manager','Supervisor'].includes(a.role);
-    var stTag='<span class="tag '+(a.status==='verified'?'green':a.status==='pending'?'orange':'red')+'">'+a.status.charAt(0).toUpperCase()+a.status.slice(1)+'</span>';
+    var st=a.status||'active';
+    var stTag='<span class="tag '+(st==='verified'?'green':st==='pending'?'orange':'red')+'">'+st.charAt(0).toUpperCase()+st.slice(1)+'</span>';
     var acts='';
     if(st==='pending') acts+='<button class="btn-sm ok" onclick="event.stopPropagation();verifyAcc('+i+')">✓ Verify</button><button class="btn-sm danger" onclick="event.stopPropagation();rejectAcc('+i+')">✕ Reject</button>';
     if(a.status==='verified'&&a.username!=='justin') acts+='<button class="btn-sm danger" onclick="event.stopPropagation();removeAcc('+i+')">Remove</button>';
