@@ -17,8 +17,8 @@
 // Single Supabase client — referenced everywhere as _supabase.
 // Never declare a bare `const supabase` to avoid Firefox redeclaration errors.
 const _supabase = window.supabase.createClient(
-  'https://YOUR_PROJECT_ID.supabase.co',
-  'YOUR_PUBLIC_ANON_KEY'
+  'https://cjzjlfpccdlmqjadgdax.supabase.co',
+  'sb_publishable_j89NCUX9ZNx9NiTvuqpEaQ_FjDM90uR'
 );
 const _LS = {
   get(key, fallback) {
