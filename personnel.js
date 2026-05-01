@@ -113,7 +113,7 @@ function renderAccounts(){
     var isAdmin2=['Manager','Supervisor'].includes(a.role);
     var stTag='<span class="tag '+(a.status==='verified'?'green':a.status==='pending'?'orange':'red')+'">'+a.status.charAt(0).toUpperCase()+a.status.slice(1)+'</span>';
     var acts='';
-    if(a.status==='pending') acts+='<button class="btn-sm ok" onclick="event.stopPropagation();verifyAcc('+i+')">✓ Verify</button><button class="btn-sm danger" onclick="event.stopPropagation();rejectAcc('+i+')">✕ Reject</button>';
+    if(st==='pending') acts+='<button class="btn-sm ok" onclick="event.stopPropagation();verifyAcc('+i+')">✓ Verify</button><button class="btn-sm danger" onclick="event.stopPropagation();rejectAcc('+i+')">✕ Reject</button>';
     if(a.status==='verified'&&a.username!=='justin') acts+='<button class="btn-sm danger" onclick="event.stopPropagation();removeAcc('+i+')">Remove</button>';
     if(a.status==='verified') acts+='<button class="btn-sm" onclick="event.stopPropagation();openResetPw('+i+')">🔑 Reset PW</button>';
     if(a.status==='verified') acts+='<button class="btn-sm" onclick="event.stopPropagation();openChangeRole('+i+')" style="border-color:rgba(168,85,247,.3);color:var(--purple)">🎖️ Role</button>';
@@ -329,22 +329,24 @@ async function submitApplication(){
   if(document.getElementById('apNda'))document.getElementById('apNda').selectedIndex=0;
   updateChips();
 }
-function renderApplications(){
+function renderApplications(data){
+  var list=data||window.applications||[];
   var w=document.getElementById('applWrap');if(!w)return;
-  document.getElementById('apST').textContent=applications.length;
-  document.getElementById('apSP').textContent=applications.filter(function(a){return a.status==='pending';}).length;
-  var apSOps=document.getElementById('apSOps');if(apSOps)apSOps.textContent=applications.filter(function(a){return !a.division||a.division.includes('Operations');}).length;
-  var apSCorp=document.getElementById('apSCorp');if(apSCorp)apSCorp.textContent=applications.filter(function(a){return a.division&&a.division.includes('Corporation');}).length;
-  var apSA=document.getElementById('apSA');if(apSA)apSA.textContent=applications.filter(function(a){return a.status==='accepted';}).length;
-  if(!applications.length){w.innerHTML='<div class="empty"><div class="empty-ico">📝</div><div class="empty-t">No Applications</div><div class="empty-s">Applications from the login screen appear here.</div></div>';return;}
+  document.getElementById('apST').textContent=list.length;
+  document.getElementById('apSP').textContent=list.filter(function(a){return a.status==='pending';}).length;
+  var apSOps=document.getElementById('apSOps');if(apSOps)apSOps.textContent=list.filter(function(a){return !a.division||a.division.includes('Operations');}).length;
+  var apSCorp=document.getElementById('apSCorp');if(apSCorp)apSCorp.textContent=list.filter(function(a){return a.division&&a.division.includes('Corporation');}).length;
+  var apSA=document.getElementById('apSA');if(apSA)apSA.textContent=list.filter(function(a){return a.status==='accepted';}).length;
+  if(!list.length){w.innerHTML='<div class="empty"><div class="empty-ico">📝</div><div class="empty-t">No Applications</div><div class="empty-s">Applications from the login screen appear here.</div></div>';return;}
   var rows='';
-  applications.forEach(function(a,i){
+  list.forEach(function(a,i){
     var isCorpDiv=a.division&&a.division.includes('Corporation');
     var divTag='<span class="tag '+(isCorpDiv?'purple':'amber')+'" style="font-size:10px;white-space:nowrap">'+(isCorpDiv?'🏢 Corp':'⚡ Ops')+'</span>';
-    var stTag='<span class="tag '+(a.status==='accepted'?'green':a.status==='rejected'?'red':a.status==='interview'?'blue':'orange')+'">'+a.status.charAt(0).toUpperCase()+a.status.slice(1)+'</span>';
+    var st=(a.status||'pending');
+    var stTag='<span class="tag '+(st==='accepted'?'green':st==='rejected'?'red':st==='interview'?'blue':'orange')+'">'+st.charAt(0).toUpperCase()+st.slice(1)+'</span>';
     var acts='<button class="btn-sm" onclick="event.stopPropagation();viewApplication('+i+')">👁 View</button>';
-    if(a.status==='pending') acts+='<button class="btn-sm" style="border-color:rgba(59,130,246,.4);color:var(--blue)" onclick="event.stopPropagation();moveToInterview('+i+')">📅 Interview</button><button class="btn-sm ok" onclick="event.stopPropagation();acceptApplication('+i+')">✓ Accept</button><button class="btn-sm danger" onclick="event.stopPropagation();rejectApplication('+i+')">✕ Reject</button>';
-    if(a.status==='interview') acts+='<button class="btn-sm" style="border-color:rgba(59,130,246,.4);color:var(--blue)" onclick="event.stopPropagation();openHrMessages('+i+')">✉ Messages</button><button class="btn-sm ok" onclick="event.stopPropagation();acceptApplication('+i+')">✓ Accept</button><button class="btn-sm danger" onclick="event.stopPropagation();rejectApplication('+i+')">✕ Reject</button>';
+    if(st==='pending') acts+='<button class="btn-sm" style="border-color:rgba(59,130,246,.4);color:var(--blue)" onclick="event.stopPropagation();moveToInterview('+i+')">📅 Interview</button><button class="btn-sm ok" onclick="event.stopPropagation();acceptApplication('+i+')">✓ Accept</button><button class="btn-sm danger" onclick="event.stopPropagation();rejectApplication('+i+')">✕ Reject</button>';
+    if(st==='interview') acts+='<button class="btn-sm" style="border-color:rgba(59,130,246,.4);color:var(--blue)" onclick="event.stopPropagation();openHrMessages('+i+')">✉ Messages</button><button class="btn-sm ok" onclick="event.stopPropagation();acceptApplication('+i+')">✓ Accept</button><button class="btn-sm danger" onclick="event.stopPropagation();rejectApplication('+i+')">✕ Reject</button>';
     rows+='<tr style="animation:rowIn .3s ease '+(i*.04)+'s both;cursor:pointer" onclick="viewApplication('+i+')" title="Click to view">'
       +'<td><div class="dn">'+a.name+'</div></td>'
       +'<td class="mono" style="font-size:11px;color:var(--text-2)">'+a.phone+'</td>'
