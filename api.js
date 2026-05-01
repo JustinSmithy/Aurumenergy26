@@ -242,16 +242,6 @@ async function saveApplication(record) {
   }
 }
 
-/**
- * saveApplications(array)
- * Saves each record individually via saveApplication.
- * Used by legacy callers that pass the full array.
- */
-async function saveApplications(arr) {
-  for (const record of arr) {
-    await saveApplication(record);
-  }
-}
 
 // ════════════════════════════════════════════
 // ROLES
