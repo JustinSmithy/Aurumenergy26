@@ -410,8 +410,12 @@ async function acceptApplication(i){
 async function rejectApplication(i){applications[i].status='rejected';await saveApplication(applications[i]);renderApplications();updateChips();toast('✕','Application rejected.','var(--red)');}
 async function moveToInterview(i){
   if(!isAdmin()){toast('🚫','Supervisors and Managers only.','var(--red)');return;}
-  applications[i].status='interview';await saveApplication(applications[i]);renderApplications();updateChips();
-  toast('📅',applications[i].name+' moved to Interview stage.','var(--blue)');
+  const a=applications[i];
+  a.status='interview';
+  const saved=await saveApplication(a);
+  if(!saved){a.status='pending';toast('⚠️','Failed to update. Please try again.','var(--red)');return;}
+  renderApplications(applications);updateChips();
+  toast('📅',a.name+' moved to Interview stage.','var(--blue)');
 }
 
 // ── ADMIN: ASSIGN SHIFTS ──────────────────────
