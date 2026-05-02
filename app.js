@@ -94,7 +94,8 @@ const DEFAULT_FLEET=[
 let accounts                 = [];                        // filled by initPersonnel()
 const pendingResets          = fetchPendingResets();
 let applications             = [];
-fetchApplications().then(data => { applications = data; renderApplications(); });
+(async () => { applications = await fetchApplications(); renderApplications(applications); })();
+
 const deliveryLogs         = fetchDeliveryLogs();
 const fieldReports         = fetchFieldReports();
 const incidentReports      = fetchIncidentReports();
