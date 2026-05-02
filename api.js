@@ -498,3 +498,8 @@ function fetchReimbursements() {
 function saveReimbursements(data) {
   _LS.set(_K.reimbursements, data);
 }
+function saveReimbursements(data) {
+  _LS.set(_K.reimbursements, data);
+}
+window.fetchApplications = fetchApplications;
+window.saveApplication = saveApplication;
