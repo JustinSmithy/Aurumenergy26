@@ -2,7 +2,6 @@
 
 // prevent missing function crashes
 function fetchPendingResets() { return []; }
-function fetchApplications() { return []; }
 function fetchPersonnel() { return []; }
 
 function loadIcSession() { return null; }
